@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>魔兽世界TBC外网翻译工具</title>
+    <!-- <script src="https://unpkg.com/vue@3"></script> -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/vue/3.5.13/vue.global.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 百度翻译 API 需要使用 MD5 进行签名，推荐使用 Blueimp MD5： -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.18.0/js/md5.min.js"></script>
+  </head>
+  <body class="bg-gray-100 text-gray-800 p-5">
+    <div id="app" class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
+      <h1 class="text-2xl font-bold mb-4">魔兽世界TBC外网翻译工具</h1>
+
+      <!-- Tabs -->
+      <div class="mb-4">
+        <button
+          @click="switchTab('dungeon')"
+          :class="{'bg-blue-500 text-white': activeTab === 'dungeon', 'bg-gray-200': activeTab !== 'dungeon'}"
+          class="px-4 py-2 rounded-l-lg hover:bg-blue-400 transition-all"
+        >
+          识别副本名称
+        </button>
+        <button
+          @click="switchTab('translate')"
+          :class="{'bg-blue-500 text-white': activeTab === 'translate', 'bg-gray-200': activeTab !== 'translate'}"
+          class="px-4 py-2 rounded-r-lg hover:bg-blue-400 transition-all"
+        >
+          翻译聊天框内容
+        </button>
+        <button
+          @click="switchTab('recruit')"
+          :class="{'bg-blue-500 text-white': activeTab === 'recruit', 'bg-gray-200': activeTab !== 'recruit'}"
+          class="px-4 py-2 rounded-r-lg hover:bg-blue-400 transition-all"
+        >
+          副本队伍招募
+        </button>
+      </div>
+
+      <!-- Tab Contents -->
+      <div v-if="activeTab === 'dungeon'">
+        <textarea
+          v-model="inputText"
+          placeholder="输入副本简写英文..."
+          rows="6"
+          class="w-full p-2 mb-4 border rounded"
+        ></textarea>
+        <div class="flex gap-2 mb-4">
+          <button
+            @click="processText"
+            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            识别副本名称
+          </button>
+          <button
+            @click="clearText"
+            class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+          >
+            清除
+          </button>
+        </div>
+        <div v-if="outputText" class="p-2 bg-gray-100 rounded border">
+          <p class="whitespace-pre-wrap">{{ outputText }}</p>
+        </div>
+      </div>
+
+      <div v-if="activeTab === 'translate'">
+        <textarea
+          v-model="inputText"
+          placeholder="粘贴聊天框英文文本进行翻译..."
+          rows="20"
+          class="w-full p-2 mb-4 border rounded"
+        ></textarea>
+        <div class="flex gap-2 mb-4">
+          <button
+            @click="translateText"
+            class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+          >
+            尝试翻译
+          </button>
+          <button
+            @click="clearText"
+            class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+          >
+            清除
+          </button>
+        </div>
+        <div v-if="outputText" class="p-2 bg-gray-100 rounded border">
+          <p class="whitespace-pre-wrap">{{ outputText }}</p>
+        </div>
+      </div>
+
+      <!-- Recruitment Tab -->
+      <div v-if="activeTab === 'recruit'">
+        <div class="mb-4">
+          <label>副本区域：</label>
+          <select
+            v-model="selectedRegion"
+            @change="updateDungeonList"
+            class="border rounded p-1 mb-2"
+          >
+            <option v-for="region in regions" :key="region" :value="region">
+              {{ region }}
+            </option>
+          </select>
+          <label>副本名称：</label>
+          <select v-model="selectedDungeon" class="border rounded p-1">
+            <option
+              v-for="dungeon in filteredDungeons"
+              :key="dungeon.key"
+              :value="dungeon.value"
+            >
+              {{ dungeon.value }}
+            </option>
+          </select>
+        </div>
+        <div class="mb-4">
+          <label>副本难度：</label>
+          <select v-model="difficulty" class="border rounded p-1">
+            <option>普通(Normal)</option>
+            <option>英雄(Heroic)</option>
+          </select>
+        </div>
+        <div class="mb-4">
+          <label>职业：</label>
+          <div>
+            <h4>坦克：</h4>
+            <label
+              ><input type="checkbox" v-model="roles" value="防骑" />
+              防骑</label
+            >
+            <label
+              ><input type="checkbox" v-model="roles" value="防战" />
+              防战</label
+            >
+            <label
+              ><input type="checkbox" v-model="roles" value="熊德" />
+              熊德</label
+            >
+            <h4>输出：</h4>
+            <label
+              ><input type="checkbox" v-model="roles" value="法师" />
+              法师</label
+            >
+            <label
+              ><input type="checkbox" v-model="roles" value="牧师" />
+              牧师</label
+            >
+            <label
+              ><input type="checkbox" v-model="roles" value="惩戒骑" />
+              惩戒骑</label
+            >
+            <label
+              ><input type="checkbox" v-model="roles" value="术士" />
+              术士</label
+            >
+            <label
+              ><input type="checkbox" v-model="roles" value="鸟德/猫德" />
+              鸟德/猫德</label
+            >
+            <label
+              ><input type="checkbox" v-model="roles" value="潜行者" />
+              潜行者</label
+            >
+            <label
+              ><input type="checkbox" v-model="roles" value="增强萨" />
+              增强萨</label
+            >
+            <label
+              ><input type="checkbox" v-model="roles" value="元素萨" />
+              元素萨</label
+            >
+            <label
+              ><input type="checkbox" v-model="roles" value="狂暴战" />
+              狂暴战</label
+            >
+            <label
+              ><input type="checkbox" v-model="roles" value="猎人" />
+              猎人</label
+            >
+            <h4>治疗：</h4>
+            <label
+              ><input type="checkbox" v-model="roles" value="奶骑" />
+              奶骑</label
+            >
+            <label
+              ><input type="checkbox" v-model="roles" value="奶德" />
+              奶德</label
+            >
+            <label
+              ><input type="checkbox" v-model="roles" value="奶萨" />
+              奶萨</label
+            >
+            <label
+              ><input type="checkbox" v-model="roles" value="奶牧" />
+              奶牧</label
+            >
+          </div>
+        </div>
+        <button
+          @click="generateRecruitment"
+          class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          生成招募信息
+        </button>
+        <div v-if="recruitmentText" class="p-2 bg-gray-100 rounded border mt-4">
+          <p class="whitespace-pre-wrap">{{ recruitmentText }}</p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const cityMap = {
+        //部落三大主城
+        ORG: '奥格瑞玛(Orgrimmar)',
+        TB: '雷霆崖(Thunder Bluff)',
+        SM: '银月城(Silvermoon)',
+        UC: '幽暗城(Undercity)',
+        //联盟三大主城
+        SW: '暴风城(Stormwind)',
+        Darn: '达纳苏斯(Darnassus)',
+        Nassus: '达纳苏斯(Darnassus)',
+        IF: '铁炉堡(Ironforge)',
+        //地精
+        BB: '藏宝海湾(Booty Bay)',
+        STV: '荊棘谷(Stranglethorn Vale)',
+        Gadgetzan: '加基森',
+        //其他地区
+        Nagrand: '纳格兰(Nagrand)'
+      };
+
+      const dungeonMap = {
+        Ramp: '地狱火堡垒：地狱火城墙(Hellfire Ramparts)-外域',
+        HR: '地狱火堡垒：地狱火城墙(Hellfire Ramparts)-外域',
+        BF: '地狱火堡垒：鲜血熔炉(The Blood Furnace)-外域',
+        SH: '地狱火堡垒：破碎大厅(The Shattered Halls)-外域',
+        SHH: '地狱火堡垒：破碎大厅(The Shattered Halls)-外域',
+        SP: '盘牙水库：奴隶围栏(The Slave Pens)-外域',
+        UB: '盘牙水库：幽暗沼泽(The Underbog)-外域',
+        SV: '盘牙水库：蒸汽地窖(The Steamvault)-外域',
+        AC: '奥金顿：奥金尼地穴(auchindoun: Auchenai Crypts)-外域',
+        Auchenai: '奥金顿：奥金尼地穴(auchindoun: Auchenai Crypts)-外域',
+        Seth: '奥金顿：塞泰克大厅(auchindoun: Sethekk Halls)-外域',
+        Sethekkhalls: '奥金顿：塞泰克大厅(auchindoun: Sethekk Halls)-外域',
+        SL: '奥金顿：暗影迷宫(auchindoun: Shadow Labyrinth)-外域',
+        MT: '奥金顿：法力陵墓(auchindoun: Mana Tombs)-外域',
+        Meth: '风暴要塞：能源舰(The Mechanar)-外域',
+        mech: '风暴要塞：能源舰(The Mechanar)-外域',
+        mechanar: '风暴要塞：能源舰(The Mechanar)-外域',
+        MEcha: '风暴要塞：能源舰(The Mechanar)-外域',
+        Arca: '风暴要塞：禁魔监狱(The Arcatraz)-外域',
+        Arcatraz: '风暴要塞：禁魔监狱(The Arcatraz)-外域',
+        Bota: '风暴要塞：生态船(The Botanica)-外域',
+        botanica: '风暴要塞：生态船(The Botanica)-外域',
+        Eye: '风暴要塞：风暴之眼(The Eye)-外域',
+        MGT: '魔导师平台(Magisters Terrace)-外域',
+        CoT1: '时光之穴：旧希尔斯布莱德/逃离敦霍尔德(The Caverns of Time: Old Hillsbrad Foothills/Escape from Durnholde)-卡利姆多',
+        OHF: '时光之穴：旧希尔斯布莱德/逃离敦霍尔德(The Caverns of Time: Old Hillsbrad Foothills/Escape from Durnholde)-卡利姆多',
+        CoT2: '时光之穴：黑色沼泽(The Caverns of Time: The Black Morass)-卡利姆多',
+        BlackMoras:
+          '时光之穴：黑色沼泽(The Caverns of Time: The Black Morass)-卡利姆多',
+        BM: '时光之穴：黑暗之门(The Caverns of Time: The Dark Portal)-卡利姆多',
+        Kara: '卡拉赞(Karazhan)-东部王国',
+        Karazhan: '卡拉赞(Karazhan)-东部王国',
+        ZA: '祖阿曼(Zul’Aman)-东部王国',
+        RFC: '怒焰裂谷(Ragefire Chasm)-卡利姆多',
+        WC: '哀号洞穴(Wailing Caverns)-卡利姆多',
+        DM: '死亡矿坑(The Deadmines)-东部王国',
+        Deadmines: '死亡矿坑(The Deadmines)-东部王国',
+        SFK: '影牙城堡(Shadowfang Keep)-东部王国',
+        Shadowfang: '影牙城堡(Shadowfang Keep)-东部王国',
+        Stocks: '监狱(The Stocks)-东部王国',
+        BFD: '黑暗深渊(Blackfathom Deeps)-卡利姆多',
+        RFK: '剃刀沼泽(Razorfen Kraul)-卡利姆多',
+        RFD: '剃刀高地(Razorfen Downs)-卡利姆多',
+        GNOMER: '诺姆瑞根(Gnomeregan)-东部王国',
+        gnomeregan: '诺姆瑞根(Gnomeregan)-东部王国',
+        SM: '血色修道院(Scarlet Monastery)-东部王国',
+        Library: '血色修道院：图书馆(Library)-东部王国',
+        Armory: '血色修道院：武器库(Armory)-东部王国',
+        Cathedral: '血色修道院：教堂(Cathedral)-东部王国',
+        Graveyard: '血色修道院：墓园(Graveyard)-东部王国',
+        ULDA: '奥达曼(Uldaman)-东部王国',
+        ZF: '祖尔法拉克(Zul’Farrak)-卡利姆多',
+        MARA: '玛拉顿(Maraudon)-卡利姆多',
+        maraudon: '玛拉顿(Maraudon)-卡利姆多',
+        ST: '沉没的神庙(Sunken Temple)-东部王国',
+        BRD: '黑石深渊(Blackrock Depths)-东部王国',
+        DM: '厄运之槌(Dire Maul)-卡利姆多',
+        Scholo: '通灵学院(Scholomance)-东部王国',
+        Aliveside: '斯坦索姆：城堡区(Aliveside)-东部王国',
+        Undeadside: '斯坦索姆：不死族区(Undeadside)-东部王国',
+        Strath: '斯坦索姆(Stratholme)-东部王国',
+        Stratholme: '斯坦索姆(Stratholme)-东部王国',
+        LBRS: '黑石塔下层(Lower Blackrock Spire)-东部王国',
+        UBRS: '黑石塔上层(Upper Blackrock Spire)-东部王国',
+        MCM: '熔火之心(Molten Core)-东部王国',
+        Onyx: "奥妮克西亚的巢穴(Onyxia's Lair)-卡利姆多",
+        BWL: '黑翼之巢(Blackwing Lair)-东部王国',
+        AQR: "安琪拉废墟(Ruins of Ahn'Qiraj)-卡利姆多",
+        AQT: "安琪拉神庙(Temple of Ahn'Qiraj)-卡利姆多",
+        'Ring of Blood': '血环(The Ring of Blood)-外域'
+      };
+
+      const abbreviationMap = {
+        'LOOKING FOR': '寻找',
+        //Looking for More
+        LFM: '寻找更多队友',
+        //Looking for 1 More
+        LF1M: '寻找1名队友',
+        //Looking for
+        LF: '寻找',
+        //Looking for Group
+        LFG: '寻找组队',
+        LF1: '寻找1名队友',
+        LF2m: '寻找2名队友',
+        LF3m: '寻找3名队友',
+        //Damage Per Second
+        DPS: '输出职业',
+        Tank: '坦克',
+        Healer: '治疗',
+        heal: '治疗',
+        //Off Tank
+        OT: '副坦',
+        //Main Tank
+        MT: '主坦',
+        //Please Send Tell
+        PST: '请密语联系',
+        WTS: '想要卖',
+        WTB: '想要买',
+        //looking for work
+        LFW: '免费代工',
+        '{skull}': '{表情骷髅头}',
+        HC: '英雄难度',
+        heroic: '英雄难度',
+        H: '英雄难度',
+        N: '普通难度',
+        normal: '普通难度',
+        norm: '普通难度',
+        'LAST SPOT': '最后一个名额',
+        //reputation
+        rep: '声望',
+        reps: '声望',
+        guild: '公会',
+        party: '组队'
+      };
+
+      const classesMap = {
+        Warrior: '战士(Warrior)',
+        Paladin: '圣骑士(Paladin)',
+        pala: '圣骑士(Paladin)',
+        Hunter: '猎人(Hunter)',
+        Rogue: '盗贼(Rogue)',
+        Priest: '牧师(Priest)',
+        Shaman: '萨满祭司(Shaman)',
+        Mage: '法师(Mage)',
+        Warlock: '术士(Warlock)',
+        Lock: '术士(Warlock)',
+        Druid: '德鲁伊(Druid)',
+
+        // 天赋职业
+        ArmsWarrior: '武器战士(Arms Warrior) [AW]',
+        FuryWarrior: '狂暴战士(Fury Warrior) [FW]',
+        ProtectionWarrior: '防护战士(Protection Warrior) [PW]',
+
+        HolyPaladin: '神圣圣骑士(Holy Paladin) [HP]',
+        ProtectionPaladin: '防护圣骑士(Protection Paladin) [PP]',
+        RetributionPaladin: '惩戒圣骑士(Retribution Paladin) [RP]',
+
+        BeastMasteryHunter: '兽王猎人(Beast Mastery Hunter) [BM]',
+        MarksmanshipHunter: '射击猎人(Marksmanship Hunter) [MM]',
+        SurvivalHunter: '生存猎人(Survival Hunter) [SV]',
+
+        AssassinationRogue: '刺杀盗贼(Assassination Rogue) [AR]',
+        CombatRogue: '战斗盗贼(Combat Rogue) [CR]',
+        SubtletyRogue: '敏锐盗贼(Subtlety Rogue) [SR]',
+
+        DisciplinePriest: '戒律牧师(Discipline Priest) [DP]',
+        HolyPriest: '神圣牧师(Holy Priest) [HP]',
+        ShadowPriest: '暗影牧师(Shadow Priest) [SP]',
+
+        ElementalShaman: '元素萨满(Elemental Shaman) [ES]',
+        EnhancementShaman: '增强萨满(Enhancement Shaman) [EnS]',
+        RestorationShaman: '恢复萨满(Restoration Shaman) [RS]',
+        'Resto shamans': '恢复萨满(Restoration Shaman)',
+        rsham: '恢复萨满(Restoration Shaman)',
+
+        ArcaneMage: '奥术法师(Arcane Mage) [AM]',
+        FireMage: '火焰法师(Fire Mage) [FM]',
+        FrostMage: '冰霜法师(Frost Mage) [FM]', // 可与火焰法师简写冲突，需根据具体上下文判断
+
+        AfflictionWarlock: '痛苦术士(Affliction Warlock) [AW]',
+        DemonologyWarlock: '恶魔学识术士(Demonology Warlock) [DW]',
+        DestructionWarlock: '毁灭术士(Destruction Warlock) [DeW]',
+
+        BalanceDruid: '平衡德鲁伊(Balance Druid) [BD]',
+        FeralDruid: '野性德鲁伊(Feral Druid) [FD]',
+        RestorationDruid: '恢复德鲁伊(Restoration Druid) [RD]',
+
+        //种族
+        Human: '人类(Human)',
+        Orc: '兽人(Orc)',
+        Dwarf: '矮人(Dwarf)',
+        NightElf: '暗夜精灵(Night Elf)',
+        Undead: '亡灵(Undead)',
+        Tauren: '牛头人(Tauren)',
+        Gnome: '侏儒(Gnome)',
+        Troll: '巨魔(Troll)'
+      };
+
+      //专业
+      const professionMap = {
+        Leatherworking: '制皮(Leatherworking)',
+        Tailoring: '裁缝(Tailoring)',
+        Engineering: '工程学(Engineering)',
+        Blacksmithing: '锻造(Blacksmithing)',
+        Enchanting: '附魔(Enchanting)',
+        Enchanter: '附魔(Enchanting)',
+        Cooking: '烹饪(Cooking)',
+        FirstAid: '急救(First Aid)',
+        Mining: '采矿(Mining)',
+        Fishing: '钓鱼(Fishing)',
+        Jewelcrafting: '珠宝制作(Jewelcrafting)',
+        Alchemy: '炼金(Alchemy)'
+      };
+
+      const app = Vue.createApp({
+        data() {
+          return {
+            inputText: '',
+            outputText: '',
+            activeTab: 'dungeon', // 默认为副本识别
+            // translationService: 'baidu', // 默认使用百度翻译 注释时则使用 google
+            selectedRegion: '',
+            selectedDungeon: '',
+            difficulty: '普通',
+            roles: []
+          };
+        },
+        mounted() {
+          // 初始化区域列表
+          this.extractRegions();
+        },
+        methods: {
+          // 提取区域列表
+          extractRegions() {
+            const regionSet = new Set();
+            for (const value of Object.values(dungeonMap)) {
+              const region = value.split('-')[1];
+              if (region) regionSet.add(region);
+            }
+            this.regions = Array.from(regionSet);
+            this.selectedRegion = this.regions[0] || '';
+            this.updateDungeonList();
+          },
+          // 更新副本列表
+          updateDungeonList() {
+            this.filteredDungeons = Object.entries(dungeonMap)
+              .filter(([, value]) => value.includes(`-${this.selectedRegion}`))
+              .map(([key, value]) => ({ key, value: value.split('-')[0] }));
+
+            // 默认选择第一个副本
+            this.selectedDungeon = this.filteredDungeons.length
+              ? this.filteredDungeons[0].value
+              : '';
+          },
+          switchTab(tabName) {
+            this.activeTab = tabName;
+            this.clearText(); // 切换 TAB 时清除输出文本
+          },
+
+          clearText() {
+            this.inputText = '';
+            this.outputText = '';
+          },
+
+          /**
+           * 处理输入文本，根据不同标签页和映射规则进行替换。
+           * @returns {string} - 处理后的文本。
+           */
+          processText() {
+            let text = this.inputText;
+
+            // 格式化 dungeonMap，根据当前标签进行调整
+            const formattedDungeonMap = {};
+            for (const [key, value] of Object.entries(dungeonMap)) {
+              formattedDungeonMap[key] =
+                this.activeTab === 'dungeon'
+                  ? value
+                  : value.replace(/\(.*?\)/g, '');
+            }
+
+            // 合并所有映射
+            const combinedMaps = {
+              ...(cityMap || {}),
+              ...formattedDungeonMap,
+              ...(abbreviationMap || {}),
+              ...(classesMap || {}),
+              ...(professionMap || {})
+            };
+
+            // 正则替换映射值，确保完整单词匹配
+            for (const [key, value] of Object.entries(combinedMaps)) {
+              const regex = new RegExp(`\\b${key}\\b`, 'gi');
+              text = text.replace(regex, value);
+            }
+
+            this.outputText = text;
+            return text;
+          },
+
+          /**
+           * 翻译处理后的文本并更新输出。
+           * @returns {Promise<string>} - 翻译后的文本。
+           */
+          async translateText() {
+            const originalText = this.processText();
+            const wordPositions = this.extractWords(originalText);
+            const uniqueWords = [
+              ...new Set(wordPositions.map((pos) => pos.word))
+            ];
+
+            console.log('提取的唯一英文单词或句子：', uniqueWords);
+            console.log('单词或句子位置列表：', wordPositions);
+
+            const translatedWordsMap = await this.batchTranslate(uniqueWords);
+
+            console.log('翻译结果映射：', translatedWordsMap);
+
+            const translatedText = this.applyTranslations(
+              originalText,
+              wordPositions,
+              translatedWordsMap
+            );
+            this.outputText = translatedText;
+            return translatedText;
+          },
+
+          /**
+           * 提取文本中的英文单词或短语及其在文本中的位置。
+           * @param {string} text - 需要提取单词的文本。
+           * @returns {Array<{word: string, start: number, end: number}>} - 包含单词和位置的数组。
+           */
+          extractWords(text) {
+            const wordPositions = [];
+            const wordRegex = /[a-zA-Z]+(?:\s+[a-zA-Z]+)*/g;
+            let match;
+
+            while ((match = wordRegex.exec(text)) !== null) {
+              const word = match[0];
+              const start = match.index;
+              const end = start + word.length;
+              wordPositions.push({ word, start, end });
+            }
+
+            return wordPositions;
+          },
+
+          /**
+           * 批量翻译单词列表。
+           * @param {string[]} words - 需要翻译的单词数组。
+           * @returns {Promise<Map<string, string>>} - 包含翻译结果的映射表。
+           */
+          async batchTranslate(words) {
+            const chunkSize = 100;
+            const delay = (ms) =>
+              new Promise((resolve) => setTimeout(resolve, ms));
+            const translatedWordsMap = new Map();
+
+            for (let i = 0; i < words.length; i += chunkSize) {
+              const chunk = words.slice(i, i + chunkSize);
+              const translatedChunk = await this.translateChunk(chunk);
+              chunk.forEach((word, index) => {
+                translatedWordsMap.set(word, translatedChunk[index] || word);
+              });
+
+              await delay(300); // 延时，避免 API 限制
+            }
+
+            return translatedWordsMap;
+          },
+
+          /**
+           * 翻译单批单词列表。
+           * @param {string[]} words - 需要翻译的单词数组。
+           * @returns {Promise<string[]>} - 翻译后的单词数组。
+           */
+          async translateChunk(words) {
+            const chunk = words.join('\n');
+            return this.translationService === 'baidu'
+              ? await this.translateWithBaidu(chunk)
+              : await this.translateWithGoogle(chunk);
+          },
+
+          /**
+           * 使用百度翻译服务进行批量翻译。
+           * @param {string} chunk - 待翻译的文本块。
+           * @returns {Promise<string[]>} - 翻译后的文本数组。
+           */
+          async translateWithBaidu(chunk) {
+            const appid = '20250301002288526';
+            const key = 'hl9Xy493Ixk8pmdSln0v';
+            const salt = Date.now();
+            const sign = md5(`${appid}${chunk}${salt}${key}`);
+            const url = `https://fanyi-api.baidu.com/api/trans/vip/translate?q=${encodeURIComponent(
+              chunk
+            )}&from=en&to=zh&appid=${appid}&salt=${salt}&sign=${sign}`;
+
+            const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(
+              url
+            )}`;
+
+            try {
+              const response = await fetch(proxyUrl);
+              const result = await response.json();
+              return result.trans_result
+                ? result.trans_result.map((item) => item.dst)
+                : [];
+            } catch (error) {
+              console.error('百度翻译错误：', error);
+              return [];
+            }
+          },
+
+          /**
+           * 使用 Google 翻译服务进行批量翻译。
+           * @param {string} chunk - 待翻译的文本块。
+           * @returns {Promise<string[]>} - 翻译后的文本数组。
+           */
+          async translateWithGoogle(chunk) {
+            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh&dt=t&q=${encodeURIComponent(
+              chunk
+            )}`;
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(
+              url
+            )}`;
+
+            try {
+              const response = await fetch(proxyUrl);
+              const data = await response.json();
+              const result = JSON.parse(data.contents);
+              return result && Array.isArray(result[0])
+                ? result[0].map((item) => item[0].replace(/\n/g, ''))
+                : [];
+            } catch (error) {
+              console.error('Google 翻译错误：', error);
+              return [];
+            }
+          },
+
+          /**
+           * 将翻译结果应用到原文本中。
+           * @param {string} text - 原文本。
+           * @param {Array} wordPositions - 单词位置数组。
+           * @param {Map} translatedWordsMap - 翻译结果映射。
+           * @returns {string} - 应用翻译后的文本。
+           */
+          applyTranslations(text, wordPositions, translatedWordsMap) {
+            let offset = 0;
+            for (const { word, start, end } of wordPositions) {
+              const translatedWord = translatedWordsMap.get(word) || word;
+              const adjustedStart = start + offset;
+              const adjustedEnd = end + offset;
+
+              text =
+                text.substring(0, adjustedStart) +
+                translatedWord +
+                text.substring(adjustedEnd);
+
+              offset += translatedWord.length - word.length;
+            }
+
+            return text;
+          }
+        }
+      });
+
+      app.mount('#app');
+    </script>
+  </body>
+</html>
