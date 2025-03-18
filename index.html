@@ -39,12 +39,12 @@
           :class="{'bg-blue-500 text-white': activeTab === 'dungeon', 'bg-gray-200 dark:bg-gray-700 dark:text-gray-100': activeTab !== 'dungeon'}"
           class="px-4 py-2 rounded-l-lg hover:bg-blue-400 transition-all"
         >
-          识别副本名称
+          副本名称
         </button>
         <button
           @click="switchTab('translate')"
           :class="{'bg-blue-500 text-white': activeTab === 'translate', 'bg-gray-200 dark:bg-gray-700 dark:text-gray-100': activeTab !== 'translate'}"
-          class="px-4 py-2 rounded-r-lg hover:bg-blue-400 transition-all"
+          class="px-4 py-2 hover:bg-blue-400 transition-all"
         >
           翻译聊天框内容
         </button>
@@ -61,7 +61,7 @@
       <div v-if="activeTab === 'dungeon'">
         <textarea
           v-model="inputText"
-          placeholder="输入副本简写英文..."
+          placeholder="输入副本简写英文, 如 BM、SHH、BT等"
           rows="6"
           class="w-full p-2 mb-4 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
         ></textarea>
@@ -91,9 +91,18 @@
       <div v-if="activeTab === 'translate'">
         <textarea
           v-model="inputText"
-          placeholder="粘贴聊天框英文文本进行翻译..."
+          placeholder="粘贴聊天框英文文本进行翻译，例如： 
+          &#10; [7. world] [Elunaris]: LF3M RFD need tank
+          &#10; [7. world] [Camelissimo]: Wlock LF Kara any time before reset!
+          &#10; [7. world] [Zurboorg]: wtb [Righteous Orb]
+          &#10; [7. world] [Szanyi]: LF2M Alcatraz - tank heal - summ ready
+          &#10; [7. world] [Elunaris]: LF3M RFD - need tank
+          &#10; [7. world] [Grook]: any purpose for [Syndicate Emblem] in tbc??
+          &#10; [7. world] [Liftwaffe]: none
+          &#10; [7. world] [Liftwaffe]: ignore it 
+          &#10; [7. world] [Sassysally]: Healer LFG MT Normal"
           rows="20"
-          class="w-full p-2 mb-4 border rounded bg-white dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600"
+          class="w-full p-2 mb-4 border rounded bg-white dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 placeholder:whitespace-pre-wrap placeholder:leading-4 placeholder:text-sm"
         ></textarea>
         <div class="flex gap-2 mb-4">
           <button
@@ -518,11 +527,29 @@
           },
 
           /**
+           * 获取默认的翻译文本内容。
+           * @returns {string} - 默认翻译内容。
+           */
+          getDefaultText() {
+            return `
+              [7. world] [Elunaris]: LF3M RFD need tank
+              [7. world] [Camelissimo]: Wlock LF Kara any time before reset!
+              [7. world] [Zurboorg]: wtb [Righteous Orb]
+              [7. world] [Szanyi]: LF2M Alcatraz - tank heal - summ ready
+              [7. world] [Elunaris]: LF3M RFD - need tank
+              [7. world] [Grook]: any purpose for [Syndicate Emblem] in tbc??
+              [7. world] [Liftwaffe]: none
+              [7. world] [Liftwaffe]: ignore it 
+              [7. world] [Sassysally]: Healer LFG MT Normal
+            `.trim();
+          },
+
+          /**
            * 处理输入文本，根据不同标签页和映射规则进行替换。
            * @returns {string} - 处理后的文本。
            */
           processText() {
-            let text = this.inputText;
+            let text = this.inputText || this.getDefaultText();
 
             // 格式化 dungeonMap，根据当前标签进行调整
             const formattedDungeonMap = {};
@@ -575,7 +602,10 @@
               wordPositions,
               translatedWordsMap
             );
-            this.outputText = translatedText;
+            this.outputText = translatedText
+              .split('\n') // 分割成多行
+              .map((line) => line.trim()) // 去除每一行首尾空格
+              .join('\n'); // 合并回多行文本;
             return translatedText;
           },
 
