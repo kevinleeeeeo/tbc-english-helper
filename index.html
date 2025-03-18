@@ -6,33 +6,51 @@
     <title>魔兽世界TBC外网翻译工具</title>
     <!-- <script src="https://unpkg.com/vue@3"></script> -->
     <script src="https://cdn.bootcdn.net/ajax/libs/vue/3.5.13/vue.global.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <!-- 百度翻译 API 需要使用 MD5 进行签名，推荐使用 Blueimp MD5： -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.18.0/js/md5.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = { darkMode: 'class' };
+    </script>
   </head>
-  <body class="bg-gray-100 text-gray-800 p-5">
-    <div id="app" class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
+
+  <body
+    :class="{ 'dark': isDarkMode }"
+    class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100 p-5"
+  >
+    <div
+      id="app"
+      class="relative max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md dark:bg-gray-800"
+    >
       <h1 class="text-2xl font-bold mb-4">魔兽世界TBC外网翻译工具</h1>
+
+      <!-- Theme Toggle Button -->
+      <div
+        class="theme-toggle absolute top-2 right-2 px-2 py-1 rounded-lg cursor-pointer transition duration-300 bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600"
+        @click="toggleTheme"
+      >
+        {{ isDarkMode ? '🌙' : '☀️' }}
+      </div>
 
       <!-- Tabs -->
       <div class="mb-4">
         <button
           @click="switchTab('dungeon')"
-          :class="{'bg-blue-500 text-white': activeTab === 'dungeon', 'bg-gray-200': activeTab !== 'dungeon'}"
+          :class="{'bg-blue-500 text-white': activeTab === 'dungeon', 'bg-gray-200 dark:bg-gray-700 dark:text-gray-100': activeTab !== 'dungeon'}"
           class="px-4 py-2 rounded-l-lg hover:bg-blue-400 transition-all"
         >
           识别副本名称
         </button>
         <button
           @click="switchTab('translate')"
-          :class="{'bg-blue-500 text-white': activeTab === 'translate', 'bg-gray-200': activeTab !== 'translate'}"
+          :class="{'bg-blue-500 text-white': activeTab === 'translate', 'bg-gray-200 dark:bg-gray-700 dark:text-gray-100': activeTab !== 'translate'}"
           class="px-4 py-2 rounded-r-lg hover:bg-blue-400 transition-all"
         >
           翻译聊天框内容
         </button>
         <button
           @click="switchTab('recruit')"
-          :class="{'bg-blue-500 text-white': activeTab === 'recruit', 'bg-gray-200': activeTab !== 'recruit'}"
+          :class="{'bg-blue-500 text-white': activeTab === 'recruit', 'bg-gray-200 dark:bg-gray-700 dark:text-gray-100': activeTab !== 'recruit'}"
           class="px-4 py-2 rounded-r-lg hover:bg-blue-400 transition-all"
         >
           副本队伍招募
@@ -45,7 +63,7 @@
           v-model="inputText"
           placeholder="输入副本简写英文..."
           rows="6"
-          class="w-full p-2 mb-4 border rounded"
+          class="w-full p-2 mb-4 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
         ></textarea>
         <div class="flex gap-2 mb-4">
           <button
@@ -61,33 +79,40 @@
             清除
           </button>
         </div>
-        <div v-if="outputText" class="p-2 bg-gray-100 rounded border">
+        <div
+          v-if="outputText"
+          class="p-2 bg-gray-100 dark:bg-gray-700 rounded border dark:border-gray-600"
+        >
           <p class="whitespace-pre-wrap">{{ outputText }}</p>
         </div>
       </div>
 
+      <!-- Translate Tab -->
       <div v-if="activeTab === 'translate'">
         <textarea
           v-model="inputText"
           placeholder="粘贴聊天框英文文本进行翻译..."
           rows="20"
-          class="w-full p-2 mb-4 border rounded"
+          class="w-full p-2 mb-4 border rounded bg-white dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600"
         ></textarea>
         <div class="flex gap-2 mb-4">
           <button
             @click="translateText"
-            class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+            class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700"
           >
             尝试翻译
           </button>
           <button
             @click="clearText"
-            class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
           >
             清除
           </button>
         </div>
-        <div v-if="outputText" class="p-2 bg-gray-100 rounded border">
+        <div
+          v-if="outputText"
+          class="p-2 bg-gray-100 dark:bg-gray-700 dark:text-gray-100 rounded border dark:border-gray-600"
+        >
           <p class="whitespace-pre-wrap">{{ outputText }}</p>
         </div>
       </div>
@@ -95,18 +120,21 @@
       <!-- Recruitment Tab -->
       <div v-if="activeTab === 'recruit'">
         <div class="mb-4">
-          <label>副本区域：</label>
+          <label class="text-gray-700 dark:text-gray-100">副本区域：</label>
           <select
             v-model="selectedRegion"
             @change="updateDungeonList"
-            class="border rounded p-1 mb-2"
+            class="border rounded p-1 mb-2 bg-white dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600"
           >
             <option v-for="region in regions" :key="region" :value="region">
               {{ region }}
             </option>
           </select>
-          <label>副本名称：</label>
-          <select v-model="selectedDungeon" class="border rounded p-1">
+          <label class="text-gray-700 dark:text-gray-100">副本名称：</label>
+          <select
+            v-model="selectedDungeon"
+            class="border rounded p-1 bg-white dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600"
+          >
             <option
               v-for="dungeon in filteredDungeons"
               :key="dungeon.key"
@@ -117,95 +145,85 @@
           </select>
         </div>
         <div class="mb-4">
-          <label>副本难度：</label>
-          <select v-model="difficulty" class="border rounded p-1">
+          <label class="text-gray-700 dark:text-gray-100">副本难度：</label>
+          <select
+            v-model="difficulty"
+            class="border rounded p-1 bg-white dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600"
+          >
             <option>普通(Normal)</option>
             <option>英雄(Heroic)</option>
           </select>
         </div>
         <div class="mb-4">
-          <label>职业：</label>
+          <label class="text-gray-700 dark:text-gray-100">职业：</label>
           <div>
-            <h4>坦克：</h4>
-            <label
-              ><input type="checkbox" v-model="roles" value="防骑" />
-              防骑</label
-            >
-            <label
-              ><input type="checkbox" v-model="roles" value="防战" />
-              防战</label
-            >
-            <label
-              ><input type="checkbox" v-model="roles" value="熊德" />
-              熊德</label
-            >
-            <h4>输出：</h4>
-            <label
-              ><input type="checkbox" v-model="roles" value="法师" />
-              法师</label
-            >
-            <label
-              ><input type="checkbox" v-model="roles" value="牧师" />
-              牧师</label
-            >
-            <label
-              ><input type="checkbox" v-model="roles" value="惩戒骑" />
-              惩戒骑</label
-            >
-            <label
-              ><input type="checkbox" v-model="roles" value="术士" />
-              术士</label
-            >
-            <label
-              ><input type="checkbox" v-model="roles" value="鸟德/猫德" />
-              鸟德/猫德</label
-            >
-            <label
-              ><input type="checkbox" v-model="roles" value="潜行者" />
-              潜行者</label
-            >
-            <label
-              ><input type="checkbox" v-model="roles" value="增强萨" />
-              增强萨</label
-            >
-            <label
-              ><input type="checkbox" v-model="roles" value="元素萨" />
-              元素萨</label
-            >
-            <label
-              ><input type="checkbox" v-model="roles" value="狂暴战" />
-              狂暴战</label
-            >
-            <label
-              ><input type="checkbox" v-model="roles" value="猎人" />
-              猎人</label
-            >
-            <h4>治疗：</h4>
-            <label
-              ><input type="checkbox" v-model="roles" value="奶骑" />
-              奶骑</label
-            >
-            <label
-              ><input type="checkbox" v-model="roles" value="奶德" />
-              奶德</label
-            >
-            <label
-              ><input type="checkbox" v-model="roles" value="奶萨" />
-              奶萨</label
-            >
-            <label
-              ><input type="checkbox" v-model="roles" value="奶牧" />
-              奶牧</label
-            >
+            <h4 class="text-gray-700 dark:text-gray-100">坦克：</h4>
+            <label class="text-gray-700 dark:text-gray-100">
+              <input type="checkbox" v-model="roles" value="防骑" /> 防骑
+            </label>
+            <label class="text-gray-700 dark:text-gray-100">
+              <input type="checkbox" v-model="roles" value="防战" /> 防战
+            </label>
+            <label class="text-gray-700 dark:text-gray-100">
+              <input type="checkbox" v-model="roles" value="熊德" /> 熊德
+            </label>
+            <h4 class="text-gray-700 dark:text-gray-100">输出：</h4>
+            <label class="text-gray-700 dark:text-gray-100">
+              <input type="checkbox" v-model="roles" value="法师" /> 法师
+            </label>
+            <label class="text-gray-700 dark:text-gray-100">
+              <input type="checkbox" v-model="roles" value="牧师" /> 牧师
+            </label>
+            <label class="text-gray-700 dark:text-gray-100">
+              <input type="checkbox" v-model="roles" value="惩戒骑" /> 惩戒骑
+            </label>
+            <label class="text-gray-700 dark:text-gray-100">
+              <input type="checkbox" v-model="roles" value="术士" /> 术士
+            </label>
+            <label class="text-gray-700 dark:text-gray-100">
+              <input type="checkbox" v-model="roles" value="鸟德/猫德" />
+              鸟德/猫德
+            </label>
+            <label class="text-gray-700 dark:text-gray-100">
+              <input type="checkbox" v-model="roles" value="潜行者" /> 潜行者
+            </label>
+            <label class="text-gray-700 dark:text-gray-100">
+              <input type="checkbox" v-model="roles" value="增强萨" /> 增强萨
+            </label>
+            <label class="text-gray-700 dark:text-gray-100">
+              <input type="checkbox" v-model="roles" value="元素萨" /> 元素萨
+            </label>
+            <label class="text-gray-700 dark:text-gray-100">
+              <input type="checkbox" v-model="roles" value="狂暴战" /> 狂暴战
+            </label>
+            <label class="text-gray-700 dark:text-gray-100">
+              <input type="checkbox" v-model="roles" value="猎人" /> 猎人
+            </label>
+            <h4 class="text-gray-700 dark:text-gray-100">治疗：</h4>
+            <label class="text-gray-700 dark:text-gray-100">
+              <input type="checkbox" v-model="roles" value="奶骑" /> 奶骑
+            </label>
+            <label class="text-gray-700 dark:text-gray-100">
+              <input type="checkbox" v-model="roles" value="奶德" /> 奶德
+            </label>
+            <label class="text-gray-700 dark:text-gray-100">
+              <input type="checkbox" v-model="roles" value="奶萨" /> 奶萨
+            </label>
+            <label class="text-gray-700 dark:text-gray-100">
+              <input type="checkbox" v-model="roles" value="奶牧" /> 奶牧
+            </label>
           </div>
         </div>
         <button
           @click="generateRecruitment"
-          class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
         >
           生成招募信息
         </button>
-        <div v-if="recruitmentText" class="p-2 bg-gray-100 rounded border mt-4">
+        <div
+          v-if="recruitmentText"
+          class="p-2 bg-gray-100 dark:bg-gray-700 dark:text-gray-100 rounded border dark:border-gray-600 mt-4"
+        >
           <p class="whitespace-pre-wrap">{{ recruitmentText }}</p>
         </div>
       </div>
@@ -296,12 +314,23 @@
         Stratholme: '斯坦索姆(Stratholme)-东部王国',
         LBRS: '黑石塔下层(Lower Blackrock Spire)-东部王国',
         UBRS: '黑石塔上层(Upper Blackrock Spire)-东部王国',
-        MCM: '熔火之心(Molten Core)-东部王国',
+        MC: '熔火之心(Molten Core)-东部王国',
         Onyx: "奥妮克西亚的巢穴(Onyxia's Lair)-卡利姆多",
         BWL: '黑翼之巢(Blackwing Lair)-东部王国',
         AQR: "安琪拉废墟(Ruins of Ahn'Qiraj)-卡利姆多",
         AQT: "安琪拉神庙(Temple of Ahn'Qiraj)-卡利姆多",
-        'Ring of Blood': '血环(The Ring of Blood)-外域'
+        'Ring of Blood': '血环(The Ring of Blood)-外域',
+        ZG: '祖尔格拉布(Zul’Gurub)-东部王国',
+        NAXX: '纳克萨玛斯(Naxxramas)-东部王国',
+        SWP: '太阳井高地(Sunwell Plateau)-东部王国',
+        'HY(HS)': '海加尔圣山(Hyjal Summit)-卡利姆多',
+        ML: '玛瑟里顿的巢穴(Magtheridon’s Lair)-外域',
+        GL: '格鲁尔的巢穴(Gruul’s Lair)-外域',
+        SC: '毒蛇神殿(Serpentshrine Cavern)-外域',
+        BT: '黑暗神庙(Black Temple)-外域',
+        EYE: '风暴之眼(Eye of Eternity)-外域',
+        AB: '阿拉希(Arathi Basin)-东部王国',
+        AV: '奥山(Alterac Valley)-东部王国'
       };
 
       const abbreviationMap = {
@@ -429,6 +458,7 @@
       const app = Vue.createApp({
         data() {
           return {
+            isDarkMode: localStorage.getItem('theme') === 'dark', // 主题状态
             inputText: '',
             outputText: '',
             activeTab: 'dungeon', // 默认为副本识别
@@ -442,8 +472,16 @@
         mounted() {
           // 初始化区域列表
           this.extractRegions();
+          if (this.isDarkMode) {
+            document.documentElement.classList.add('dark');
+          }
         },
         methods: {
+          toggleTheme() {
+            this.isDarkMode = !this.isDarkMode;
+            localStorage.setItem('theme', this.isDarkMode ? 'dark' : 'light');
+            document.documentElement.classList.toggle('dark', this.isDarkMode);
+          },
           // 提取区域列表
           extractRegions() {
             const regionSet = new Set();
@@ -459,7 +497,10 @@
           updateDungeonList() {
             this.filteredDungeons = Object.entries(dungeonMap)
               .filter(([, value]) => value.includes(`-${this.selectedRegion}`))
-              .map(([key, value]) => ({ key, value: value.split('-')[0] }));
+              .map(([key, value]) => ({
+                key,
+                value: `[${key}] ${value.split('-')[0]}`
+              }));
 
             // 默认选择第一个副本
             this.selectedDungeon = this.filteredDungeons.length
