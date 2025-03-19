@@ -187,7 +187,7 @@ xl：屏幕宽度 1280px 。
           <div class="grid grid-cols-2 gap-4 my-4">
             <!-- 左侧列：角色分类 -->
             <div class="w-36 sm:w-36 md:w-40 lg:w-48 xl:w-56 2xl:w-72">
-              <div>
+              <div class="mt-1">
                 <h4
                   class="font-semibold text-stone-700 dark:text-stone-100 text-sm sm:text-sm md:text-base lg:text-lg"
                 >
@@ -227,7 +227,7 @@ xl：屏幕宽度 1280px 。
 
               <div class="mt-4">
                 <h4
-                  class="font-semibold text-stone-700 dark:text-stone-100 text-xs sm:text-sm md:text-base lg:text-lg"
+                  class="font-semibold text-stone-700 dark:text-stone-100 text-sm sm:text-sm md:text-base lg:text-lg"
                 >
                   输出 ({{ recruitTeam.dps.length }}/{{
                   dungeonRequireRoles[playerCount].dps }})
@@ -721,6 +721,15 @@ xl：屏幕宽度 1280px 。
             if (!this.selectedDungeon) return 5;
             const match = this.selectedDungeon.match(/\[(\d+)]/);
             return match ? parseInt(match[1], 10) : 5;
+          }
+        },
+
+        watch: {
+          // selectedDungeon 更新时清空 recruitTeam 数据
+          selectedDungeon(newValue) {
+            this.recruitTeam.tank = [];
+            this.recruitTeam.dps = [];
+            this.recruitTeam.healer = [];
           }
         },
         methods: {
