@@ -15,11 +15,12 @@
   </head>
 
   <!-- 
-sm：屏幕宽度 640px 。
-md：屏幕宽度 768px 。
-lg：屏幕宽度 1024px 。
-xl：屏幕宽度 1280px 。
-2xl：屏幕宽度 1536px 。 -->
+  sm：屏幕宽度 640px 。
+  md：屏幕宽度 768px 。
+  lg：屏幕宽度 1024px 。
+  xl：屏幕宽度 1280px 。
+  2xl：屏幕宽度 1536px 。 
+  -->
   <body
     :class="{ 'dark': isDarkMode }"
     class="bg-stone-100 text-stone-800 dark:bg-stone-900 dark:text-stone-50 p-5 select-none"
@@ -196,10 +197,7 @@ xl：屏幕宽度 1280px 。
         <!-- 招募职业板块 -->
         <div class="mb-4">
           <h3 class="text-stone-700 dark:text-stone-100">招募职业：</h3>
-          <!-- <div class="grid grid-cols-2 gap-4 my-4"> -->
-          <!-- <div
-            class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 my-4"
-          > -->
+
           <div
             class="flex flex-col flex-col-reverse md:flex-row sm:flex-col-reverse gap-4 my-4"
           >
@@ -333,15 +331,10 @@ xl：屏幕宽度 1280px 。
             <div
               class="grid-cols-2 sm:grid sm:grid-cols-2 sm:gap-2 md:mt-2 md:h-full md:w-full"
             >
-              <!-- <div
-                v-for="(role, index) in roles"
-                :key="index"
-                class="flex items-center justify-between p-2 mb-1 bg-stone-100 rounded dark:bg-stone-700"
-              > -->
               <div
                 v-for="(role, index) in roles"
                 :key="index"
-                class="flex items-center justify-between p-2 mb-1 bg-stone-100 rounded dark:bg-stone-700"
+                class="flex items-center justify-between p-2 mb-1 bg-stone-100 rounded bg-stone-200 dark:bg-stone-700"
               >
                 <div class="flex items-center gap-2">
                   <!-- 显示角色图标 -->
