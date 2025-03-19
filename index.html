@@ -33,7 +33,7 @@ xl：屏幕宽度 1280px 。
 
         <!-- Theme Toggle Button -->
         <div
-          class="theme-toggle px-2 py-1 rounded-md cursor-pointer transition duration-300 bg-stone-100 text-stone-800 dark:bg-stone-700 dark:text-stone-100 hover:bg-stone-200 dark:hover:bg-stone-600"
+          class="h-8 w-8 text-center theme-toggle px-1 py-1 rounded cursor-pointer transition duration-300 bg-stone-100 text-stone-800 dark:bg-stone-700 dark:text-stone-100 hover:bg-stone-200 dark:hover:bg-stone-600"
           @click="toggleTheme"
         >
           {{ isDarkMode ? '🌙' : '☀️' }}
@@ -44,22 +44,34 @@ xl：屏幕宽度 1280px 。
       <div class="mb-4 flex">
         <button
           @click="switchTab('dungeon')"
-          :class="{'bg-stone-400 text-white': activeTab === 'dungeon', 'bg-stone-200 dark:bg-stone-600 dark:text-stone-100': activeTab !== 'dungeon'}"
-          class="px-2 py-2 rounded-l-md hover:bg-stone-400 transition-all w-1/3"
+          :class="{
+            'bg-stone-400 text-white': activeTab === 'dungeon',
+            'bg-stone-200 dark:bg-stone-600 dark:text-stone-100': activeTab !== 'dungeon',
+            'transition-all duration-300 ease-in-out': true
+          }"
+          class="px-2 py-2 rounded-l hover:bg-stone-400 w-1/3"
         >
           副本名称
         </button>
         <button
           @click="switchTab('translate')"
-          :class="{'bg-stone-400 text-white': activeTab === 'translate', 'bg-stone-200 dark:bg-stone-600 dark:text-stone-100': activeTab !== 'translate'}"
-          class="px-2 py-2 hover:bg-stone-400 transition-all w-1/3"
+          :class="{
+            'bg-stone-400 text-white': activeTab === 'translate',
+            'bg-stone-200 dark:bg-stone-600 dark:text-stone-100': activeTab !== 'translate',
+            'transition-all duration-300 ease-in-out': true
+          }"
+          class="px-2 py-2 hover:bg-stone-400 w-1/3"
         >
           聊天框
         </button>
         <button
           @click="switchTab('recruit')"
-          :class="{'bg-stone-400 text-white': activeTab === 'recruit', 'bg-stone-200 dark:bg-stone-600 dark:text-stone-100': activeTab !== 'recruit'}"
-          class="px-2 py-2 rounded-r-md hover:bg-stone-400 transition-all w-1/3"
+          :class="{
+            'bg-stone-400 text-white': activeTab === 'recruit',
+            'bg-stone-200 dark:bg-stone-600 dark:text-stone-100': activeTab !== 'recruit',
+            'transition-all duration-300 ease-in-out': true
+          }"
+          class="px-2 py-2 rounded-r hover:bg-stone-400 w-1/3"
         >
           副本招募
         </button>
@@ -184,12 +196,20 @@ xl：屏幕宽度 1280px 。
         <!-- 招募职业板块 -->
         <div class="mb-4">
           <h3 class="text-stone-700 dark:text-stone-100">招募职业：</h3>
-          <div class="grid grid-cols-2 gap-4 my-4">
+          <!-- <div class="grid grid-cols-2 gap-4 my-4"> -->
+          <!-- <div
+            class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 my-4"
+          > -->
+          <div
+            class="flex flex-col flex-col-reverse md:flex-row sm:flex-col-reverse gap-4 my-4"
+          >
             <!-- 左侧列：角色分类 -->
-            <div class="w-36 sm:w-36 md:w-40 lg:w-48 xl:w-56 2xl:w-72">
+            <div
+              class="w-64 sm:w-64 md:w-full md:mr-20 lg:w-full xl:w-full 2xl:w-full 2xl:mr-0"
+            >
               <div class="mt-1">
                 <h4
-                  class="font-semibold text-stone-700 dark:text-stone-100 text-sm sm:text-sm md:text-base lg:text-lg"
+                  class="font-semibold text-stone-700 dark:text-stone-100 text-sm sm:text-sm md:text-base lg:text-md mb-2"
                 >
                   坦克 ({{ recruitTeam.tank.length }}/{{
                   dungeonRequireRoles[playerCount].tank }})
@@ -202,19 +222,22 @@ xl：屏幕宽度 1280px 。
                   </button>
                 </h4>
                 <div
-                  class="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2"
+                  class="grid grid-cols-5 sm:grid-cols-5 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2"
                 >
                   <!-- 坦克职业头像 -->
                   <div
-                    v-for="(icon, index) in recruitTeam.tank"
+                    v-for="(member, index) in recruitTeam.tank"
                     :key="index"
                     class="relative mb-2 grid place-items-center"
                   >
                     <img
-                      :src="icon"
-                      alt="坦克头像"
+                      :src="member.icon"
+                      :alt="member.name"
                       class="w-8 h-8 rounded-full object-cover aspect-square"
                     />
+                    <span class="text-xs text-gray-600 dark:text-gray-400 mt-1"
+                      >{{ member.name }}</span
+                    >
                     <button
                       @click="removeRole('tank', index)"
                       class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 text-xs h-4 w-4 flex items-center justify-center leading-[0.875rem]"
@@ -227,7 +250,7 @@ xl：屏幕宽度 1280px 。
 
               <div class="mt-4">
                 <h4
-                  class="font-semibold text-stone-700 dark:text-stone-100 text-sm sm:text-sm md:text-base lg:text-lg"
+                  class="font-semibold text-stone-700 dark:text-stone-100 text-sm sm:text-sm md:text-base lg:text-md mb-2"
                 >
                   输出 ({{ recruitTeam.dps.length }}/{{
                   dungeonRequireRoles[playerCount].dps }})
@@ -239,19 +262,22 @@ xl：屏幕宽度 1280px 。
                   </button>
                 </h4>
                 <div
-                  class="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2"
+                  class="grid grid-cols-5 sm:grid-cols-5 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2"
                 >
                   <!-- 输出职业头像 -->
                   <div
-                    v-for="(icon, index) in recruitTeam.dps"
+                    v-for="(member, index) in recruitTeam.dps"
                     :key="index"
                     class="relative mb-2 grid place-items-center"
                   >
                     <img
-                      :src="icon"
-                      alt="输出头像"
+                      :src="member.icon"
+                      :alt="member.name"
                       class="w-8 h-8 rounded-full object-cover aspect-square"
                     />
+                    <span class="text-xs text-gray-600 dark:text-gray-400 mt-1"
+                      >{{ member.name }}</span
+                    >
                     <button
                       @click="removeRole('dps', index)"
                       class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 text-xs h-4 w-4 flex items-center justify-center leading-[0.875rem]"
@@ -264,7 +290,7 @@ xl：屏幕宽度 1280px 。
 
               <div class="mt-4">
                 <h4
-                  class="font-semibold text-stone-700 dark:text-stone-100 text-sm sm:text-sm md:text-base lg:text-lg"
+                  class="font-semibold text-stone-700 dark:text-stone-100 text-sm sm:text-sm md:text-base lg:text-md mb-2"
                 >
                   治疗 ({{ recruitTeam.healer.length }}/{{
                   dungeonRequireRoles[playerCount].healer }})
@@ -276,19 +302,22 @@ xl：屏幕宽度 1280px 。
                   </button>
                 </h4>
                 <div
-                  class="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2"
+                  class="grid grid-cols-5 sm:grid-cols-5 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2"
                 >
                   <!-- 治疗职业头像 -->
                   <div
-                    v-for="(icon, index) in recruitTeam.healer"
+                    v-for="(member, index) in recruitTeam.healer"
                     :key="index"
                     class="relative mb-2 grid place-items-center"
                   >
                     <img
-                      :src="icon"
-                      alt="治疗头像"
+                      :src="member.icon"
+                      :alt="member.name"
                       class="w-8 h-8 rounded-full object-cover aspect-square"
                     />
+                    <span class="text-xs text-gray-600 dark:text-gray-400 mt-1"
+                      >{{ member.name }}</span
+                    >
                     <button
                       @click="removeRole('healer', index)"
                       class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 text-xs h-4 w-4 flex items-center justify-center leading-[0.875rem]"
@@ -301,7 +330,14 @@ xl：屏幕宽度 1280px 。
             </div>
 
             <!-- 右侧列：基础职业 -->
-            <div>
+            <div
+              class="grid-cols-2 sm:grid sm:grid-cols-2 sm:gap-2 md:mt-2 md:h-full md:w-full"
+            >
+              <!-- <div
+                v-for="(role, index) in roles"
+                :key="index"
+                class="flex items-center justify-between p-2 mb-1 bg-stone-100 rounded dark:bg-stone-700"
+              > -->
               <div
                 v-for="(role, index) in roles"
                 :key="index"
@@ -807,22 +843,32 @@ xl：屏幕宽度 1280px 。
             this.selectedJob = null;
           },
           assignRole(role) {
-            const icon = this.selectedJob.icon;
             const maxCount =
               this.dungeonRequireRoles[this.playerCount]?.[role] || 0;
+            const jobInfo = this.selectedJob;
+            console.log(this.selectedJob, jobInfo);
 
             if (role === 'tank' && this.recruitTeam.tank.length < maxCount) {
-              this.recruitTeam.tank.push(icon);
+              this.recruitTeam.tank.push({
+                name: jobInfo.name,
+                icon: jobInfo.icon
+              });
             } else if (
               role === 'dps' &&
               this.recruitTeam.dps.length < maxCount
             ) {
-              this.recruitTeam.dps.push(icon);
+              this.recruitTeam.dps.push({
+                name: jobInfo.name,
+                icon: jobInfo.icon
+              });
             } else if (
               role === 'healer' &&
               this.recruitTeam.healer.length < maxCount
             ) {
-              this.recruitTeam.healer.push(icon);
+              this.recruitTeam.healer.push({
+                name: jobInfo.name,
+                icon: jobInfo.icon
+              });
             }
 
             this.closeModal();
