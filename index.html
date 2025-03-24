@@ -222,18 +222,14 @@
           <h3 class="text-stone-700 dark:text-stone-100">招募位置：</h3>
           <!-- card-group -->
           <div
-            class="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 my-4"
+            class="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 my-2"
           >
             <div
               v-for="(recruit, index) in simpleRecruit"
               :key="index"
-              @click="selectFormat(index)"
-              :class="[
-              'p-4 bg-stone-200 rounded shadow dark:bg-stone-700 cursor-pointer relative',
-              selectedSimpleRecruIndex === index ? 'ring-4 ring-stone-400' : ''
-            ]"
+              class="p-4 bg-stone-200 rounded shadow dark:bg-stone-700 cursor-pointer relative"
             >
-              <h4 class="text-lg font-semibold">{{ recruit.chsName }}</h4>
+              <h4 class="text-md font-semibold">{{ recruit.chsName }}</h4>
               <div class="absolute top-4 right-4 flex items-center space-x-2">
                 <button
                   @click.stop="decreaseCount(index)"
@@ -760,7 +756,6 @@
             activeTab: 'dungeon', // 默认为副本识别
             // translationService: 'baidu', // 默认使用百度翻译 注释时则使用 google
             activeRecurTab: '简单',
-            selectedSimpleRecruIndex: 0,
             simpleRecruit: [
               {
                 chsName: '坦克',
@@ -879,10 +874,6 @@
           }
         },
         methods: {
-          selectFormat(index) {
-            // alert(`已选择格式${index + 1}`);
-            this.selectedSimpleRecruIndex = index;
-          },
           increaseCount(index) {
             if (this.simpleRecruit[index].count < 40) {
               this.simpleRecruit[index].count++;
