@@ -4,7 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>魔兽世界TBC外网翻译工具</title>
-    <!-- <script src="https://unpkg.com/vue@3"></script> -->
+    <!-- 引入 Font Awesome CDN -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
     <script src="https://cdn.bootcdn.net/ajax/libs/vue/3.5.13/vue.global.min.js"></script>
     <!-- 百度翻译 API 需要使用 MD5 进行签名，推荐使用 Blueimp MD5： -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.18.0/js/md5.min.js"></script>
@@ -229,7 +233,7 @@
               selectedSimpleRecruIndex === index ? 'ring-4 ring-stone-400' : ''
             ]"
             >
-              <h4 class="text-lg font-semibold">{{ recruit.name }}</h4>
+              <h4 class="text-lg font-semibold">{{ recruit.chsName }}</h4>
               <div class="absolute top-4 right-4 flex items-center space-x-2">
                 <button
                   @click.stop="decreaseCount(index)"
@@ -251,22 +255,46 @@
           <!-- 生成招募信息按钮 -->
           <button
             @click="generateRecruitment"
-            class="mt-4 py-2 bg-stone-500 text-white rounded hover:bg-stone-600 dark:bg-stone-600 dark:hover:bg-stone-700 w-full mb-4"
+            class="mt-4 py-2 bg-amber-500 text-white rounded hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700 w-full mb-4"
           >
             生成招募信息
           </button>
 
           <!-- 招募信息展示 -->
+          <!-- 中文 -->
           <div
-            v-if="recruitmentText"
-            class="p-2 bg-stone-100 dark:bg-stone-700 dark:text-stone-100 rounded border dark:border-stone-600 mt-4"
+            v-if="chineseRecruitmentText"
+            @mouseenter="showCopyChsRecruBtn = true"
+            @mouseleave="showCopyChsRecruBtn = false"
+            @click="toggleCopyButton"
+            class="p-2 bg-stone-100 dark:bg-stone-700 dark:text-stone-100 rounded border dark:border-stone-600 mt-4 relative group select-text"
           >
-            <p class="whitespace-pre-wrap">{{ recruitmentText }}</p>
+            <p class="whitespace-pre-wrap">{{ chineseRecruitmentText }}</p>
+
             <button
-              @click="copyToClipboard(recruitmentText)"
-              class="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+              v-if="showCopyChsRecruBtn"
+              @click.stop="copyToClipboard(chineseRecruitmentText)"
+              class="absolute top-1 right-1 w-8 h-8 flex items-center justify-center rounded bg-stone-300 hover:bg-stone-400 dark:bg-stone-600 dark:hover:bg-stone-500 text-stone-700 dark:text-white transition-opacity duration-300"
             >
-              复制
+              <i class="fa-solid fa-copy"></i>
+            </button>
+          </div>
+          <!-- 英文 -->
+          <div
+            v-if="englishRecruitmentText"
+            @mouseenter="showCopyEngRecruBtn = true"
+            @mouseleave="showCopyEngRecruBtn = false"
+            @click="toggleCopyButton"
+            class="p-2 bg-stone-100 dark:bg-stone-700 dark:text-stone-100 rounded border dark:border-stone-600 mt-4 relative group select-text"
+          >
+            <p class="whitespace-pre-wrap">{{ englishRecruitmentText }}</p>
+
+            <button
+              v-if="showCopyEngRecruBtn"
+              @click.stop="showCopyEngRecruBtn(englishRecruitmentText)"
+              class="absolute top-1 right-1 w-8 h-8 flex items-center justify-center rounded bg-stone-300 hover:bg-stone-400 dark:bg-stone-600 dark:hover:bg-stone-500 text-stone-700 dark:text-white transition-opacity duration-300"
+            >
+              <i class="fa-solid fa-copy"></i>
             </button>
           </div>
         </div>
@@ -735,19 +763,26 @@
             selectedSimpleRecruIndex: 0,
             simpleRecruit: [
               {
-                name: '坦克',
+                chsName: '坦克',
+                engName: 'Tank',
                 count: 0
               },
 
               {
-                name: '治疗',
+                chsName: '治疗',
+                engName: 'Healer',
                 count: 0
               },
               {
-                name: '输出',
+                chsName: '输出',
+                engName: 'DPS',
                 count: 0
               }
             ],
+            showCopyChsRecruBtn: false,
+            showCopyEngRecruBtn: false,
+            chineseRecruitmentText: '',
+            englishRecruitmentText: '',
             selectedRegion: '',
             selectedDungeon: '',
             difficulty: 'normal',
@@ -976,36 +1011,63 @@
             this.selectedTemplate = template;
           },
           generateRecruitment() {
-            if (!this.selectedTemplate) return;
-            let zhText = '';
-            let enText = '';
-            const dungeon = this.selectedDungeon || '副本名称';
-            const difficulty = this.difficulty || '普通';
-
-            switch (this.selectedTemplate.format) {
-              case 1:
-                zhText = `${dungeon}[${difficulty}][LF/LFM][职业][跳怪][全通][任务]`;
-                enText = `${dungeon}[${difficulty}][LF/LFM][Class][Skip][Full Run][Quest]`;
-                break;
-              case 2:
-                zhText = `${dungeon}[${difficulty}][LF/LFM][指定职业]/[总人数]`;
-                enText = `${dungeon}[${difficulty}][LF/LFM][Class]/[Total]`;
-                break;
-              case 3:
-                zhText = `[LFG]${dungeon}`;
-                enText = `[LFG]${dungeon}`;
-                break;
+            if (
+              !this.selectedRegion ||
+              !this.selectedDungeon ||
+              !this.difficulty
+            ) {
+              this.recruitmentText = '请先选择区域、副本和难度！';
+              return;
             }
 
-            this.recruitmentText = {
-              zh: zhText,
-              en: enText
-            };
+            // 统计各职业数量
+            const recruitCounts = this.simpleRecruit
+              .filter((recruit) => recruit.count > 0)
+              .map((recruit) => ({
+                chsName: recruit.chsName,
+                engName: recruit.engName,
+                count: recruit.count
+              }));
+
+            if (recruitCounts.length === 0) {
+              alert('请至少选择一个招募职业！');
+              return;
+            }
+
+            // 生成中文格式
+            const chineseRecruitText = recruitCounts
+              .map((recruit) => `${recruit.chsName} x${recruit.count}`)
+              .join('，');
+            // 提取中文副本名称
+            const chineseDungeonName = this.selectedDungeon.replace(
+              /.*：(.+?)\(.+\)/,
+              '$1'
+            );
+            this.chineseRecruitmentText = `${chineseDungeonName}需要${chineseRecruitText}`;
+
+            // 生成英文格式
+            const englishRecruitText = recruitCounts
+              .map(
+                (recruit) => `${recruit.count} ${recruit.engName.toLowerCase()}`
+              )
+              .join(', ');
+            // 提取英文副本名称
+            const englishDungeonName = this.selectedDungeon.replace(
+              /.*\((.+?)\)/,
+              '$1'
+            );
+            this.englishRecruitmentText = `${englishDungeonName} need ${englishRecruitText}`;
           },
+
           copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
-              alert('已复制到剪贴板');
+              alert('招募信息已复制到剪贴板！');
             });
+          },
+          toggleCopyButton() {
+            // 移动设备点击切换显示状态
+            this.showCopyChsRecruBtn = !this.showCopyChsRecruBtn;
+            this.showCopyEngRecruBtn = !this.showCopyEngRecruBtn;
           },
           toggleTheme() {
             this.isDarkMode = !this.isDarkMode;
