@@ -213,7 +213,7 @@
         index === 0 ? 'rounded-r-none' : '',
         index === 1 ? 'rounded-l-none' : ''
       ]"
-              @click="activeCompletionTab = tab"
+              @click="setCompletionMode(tab)"
             >
               {{ tab }}
             </button>
@@ -808,7 +808,6 @@
             activeTab: 'dungeon', // 默认为副本识别
             // translationService: 'baidu', // 默认使用百度翻译 注释时则使用 google
             activeCompletionTab: '全通',
-            completion: 'full',
             selectedBosses: [],
             activeRecurTab: '简单',
             simpleRecruit: [
@@ -913,6 +912,15 @@
           }
         },
         computed: {
+          // 根据选中的tab更新 completionMode
+          completionMode() {
+            if (this.activeCompletionTab === '全通') {
+              return 'full-全通';
+            } else if (this.activeCompletionTab === '半通') {
+              return `part-${this.selectedBosses.join(',')}`; // 返回BOSS数组
+            }
+            return '';
+          },
           playerCount() {
             if (!this.selectedDungeon) return 5;
             const match = this.selectedDungeon.match(/\[(\d+)]/);
@@ -929,6 +937,12 @@
           }
         },
         methods: {
+          setCompletionMode(tab) {
+            this.activeCompletionTab = tab;
+            if (tab === '全通') {
+              this.selectedBosses = []; // 全通时清空已选择的BOSS
+            }
+          },
           increaseCount(index) {
             if (this.simpleRecruit[index].count < 40) {
               this.simpleRecruit[index].count++;
@@ -1089,14 +1103,28 @@
             const chineseRecruitText = recruitCounts
               .map((recruit) => `${recruit.chsName} x${recruit.count}`)
               .join('，');
+
             // 提取中文副本名称
             const chineseDungeonName = dungeonName.replace(
               /.*?[\] ]+([^：()]+)[：]?.*\(.*\)$/,
               '$1'
             );
+
+            // 生成中文招募信息，根据全通或半通调整
+            let chineseCompletionInfo = '';
+            if (this.activeCompletionTab === '全通') {
+              chineseCompletionInfo = '[全通]';
+            } else if (this.activeCompletionTab === '半通') {
+              // 处理半通BOSS的选择格式
+              const selectedBossesFormatted = this.selectedBosses
+                .map((num) => `老${num}`)
+                .join('、');
+              chineseCompletionInfo = `[只打${selectedBossesFormatted}]`;
+            }
+
             this.chineseRecruitmentText = `[${chineseDungeonName}][${
               this.difficulty === 'normal' ? '普通模式' : '英雄模式'
-            }]需要${chineseRecruitText}`;
+            }]${chineseCompletionInfo}需要${chineseRecruitText}`;
 
             // 生成英文格式
             const englishRecruitText = recruitCounts
@@ -1111,11 +1139,23 @@
 
             // 提取英文副本名称
             const englishDungeonName = dungeonName.replace(/.*\((.+)\)$/, '$1');
+
+            // 生成英文招募信息，根据全通或半通调整
+            let englishCompletionInfo = '';
+            if (this.activeCompletionTab === '全通') {
+              englishCompletionInfo = 'full run';
+            } else if (this.activeCompletionTab === '半通') {
+              // 处理半通BOSS的选择格式，避免重复的 boss
+              const selectedBossesFormatted = this.selectedBosses
+                .map((num) => `boss${num}`)
+                .join(','); // 修复这里的逗号拼接
+              englishCompletionInfo = `only kill ${selectedBossesFormatted}`;
+            }
+
             this.englishRecruitmentText = `[LF][${englishDungeonName}][${englishDungeonShortName}][${
               this.difficulty === 'normal' ? 'Normal' : 'Heroic'
-            }] need ${englishRecruitText}`;
+            }] need ${englishRecruitText} ,${englishCompletionInfo}`;
           },
-
           copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
               alert('招募信息已复制到剪贴板！');
