@@ -144,15 +144,27 @@
           ></textarea>
 
           <!-- 输出框 -->
-          <textarea
-            v-model="outputText"
-            :placeholder="isEnglishToChinese ? '翻译后的中文...' : '翻译后的英文...'"
-            rows="6"
-            readonly
-            class="w-full min-h-[300px] p-3 border rounded bg-stone-200 dark:bg-stone-700 dark:text-stone-100 dark:border-stone-600 resize-none overflow-hidden h-auto"
-            ref="outputArea"
-            @input="adjustHeight($event)"
-          ></textarea>
+          <div class="relative">
+            <textarea
+              v-model="outputText"
+              :placeholder="isEnglishToChinese ? '翻译后的中文...' : '翻译后的英文...'"
+              rows="6"
+              readonly
+              class="w-full min-h-[300px] p-3 border rounded bg-stone-200 dark:bg-stone-700 dark:text-stone-100 dark:border-stone-600 resize-none overflow-hidden h-auto"
+              ref="outputArea"
+              @input="adjustHeight($event)"
+            ></textarea>
+            <!-- 复制按钮 -->
+            <button
+              v-if="outputText"
+              @click.stop="copyToClipboard(outputText)"
+              class="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded bg-stone-300 hover:bg-stone-400 dark:bg-stone-600 dark:hover:bg-stone-500 text-stone-700 dark:text-white transition-all duration-300"
+            >
+              <i
+                :class="copyTranslateOutputSuccess ? 'fa-solid fa-check' : 'fa-solid fa-copy'"
+              ></i>
+            </button>
+          </div>
         </div>
 
         <!-- 操作按钮 -->
@@ -229,11 +241,11 @@
               v-for="(tab, index) in ['全通', '半通']"
               :key="index"
               :class="[
-        'w-full p-2 first:rounded-l last:rounded-r',
-        activeCompletionTab === tab ? 'bg-stone-400 text-white dark:bg-stone-700 dark:text-white' : 'bg-stone-200 text-stone-700 dark:bg-stone-600 dark:text-stone-300',
-        index === 0 ? 'rounded-r-none' : '',
-        index === 1 ? 'rounded-l-none' : ''
-      ]"
+                'w-full p-2 first:rounded-l last:rounded-r',
+                activeCompletionTab === tab ? 'bg-stone-400 text-white dark:bg-stone-700 dark:text-white' : 'bg-stone-200 text-stone-700 dark:bg-stone-600 dark:text-stone-300',
+                index === 0 ? 'rounded-r-none' : '',
+                index === 1 ? 'rounded-l-none' : ''
+              ]"
               @click="setCompletionMode(tab)"
             >
               {{ tab }}
@@ -277,11 +289,11 @@
               :key="tab"
               @click="activeRecurTab = tab"
               :class="[
-              'w-full p-2 first:rounded-l last:rounded-r',
-              activeRecurTab  === tab ? 'bg-stone-400 text-white dark:bg-stone-700 dark:text-white' : 'bg-stone-200 text-stone-700 dark:bg-stone-600 dark:text-stone-300',
-              index === 0 ? 'rounded-r-none' : '',
-              index === 1 ? 'rounded-l-none' : ''
-            ]"
+                'w-full p-2 first:rounded-l last:rounded-r',
+                activeRecurTab  === tab ? 'bg-stone-400 text-white dark:bg-stone-700 dark:text-white' : 'bg-stone-200 text-stone-700 dark:bg-stone-600 dark:text-stone-300',
+                index === 0 ? 'rounded-r-none' : '',
+                index === 1 ? 'rounded-l-none' : ''
+              ]"
             >
               {{ tab }}
             </button>
@@ -826,6 +838,7 @@
             isDarkMode: localStorage.getItem('theme') === 'dark', // 主题状态
             inputText: '',
             outputText: '',
+            copyTranslateOutputSuccess: false, // 复制成功标识
             activeTab: 'dungeon', // 默认为副本识别
             // translationService: 'baidu', // 默认使用百度翻译 注释时则使用 google
             activeCompletionTab: '全通',
