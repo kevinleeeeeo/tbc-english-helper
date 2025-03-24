@@ -198,314 +198,366 @@
           </select>
         </div>
 
-        <!-- 招募职业 TAB 分页 -->
-        <div class="flex justify-center my-4">
-          <button
-            v-for="(tab, index) in ['简单', '具体']"
-            :key="tab"
-            @click="activeRecurTab = tab"
-            :class="[
+        <!-- 全通/半通选择 Tab分页-->
+        <div class="mb-4">
+          <label class="block text-stone-700 dark:text-stone-300"
+            >副本全通/半通：</label
+          >
+          <div class="flex my-4">
+            <button
+              v-for="(tab, index) in ['全通', '半通']"
+              :key="index"
+              :class="[
+        'w-full p-2 first:rounded-l last:rounded-r',
+        activeCompletionTab === tab ? 'bg-stone-400 text-white dark:bg-stone-700 dark:text-white' : 'bg-stone-200 text-stone-700 dark:bg-stone-600 dark:text-stone-300',
+        index === 0 ? 'rounded-r-none' : '',
+        index === 1 ? 'rounded-l-none' : ''
+      ]"
+              @click="activeCompletionTab = tab"
+            >
+              {{ tab }}
+            </button>
+          </div>
+        </div>
+
+        <!-- 根据TAB选择显示内容 -->
+
+        <!-- BOSS 多选框 (仅在半通时显示) -->
+        <div v-if="activeCompletionTab === '半通'" class="mb-2">
+          <label class="block text-stone-700 dark:text-stone-300 my-2"
+            >选择要击杀的BOSS：</label
+          >
+          <div class="grid grid-cols-2 gap-4">
+            <div
+              v-for="num in 12"
+              :key="num"
+              class="flex items-center space-x-2 p-2 rounded bg-stone-200 dark:bg-stone-600"
+            >
+              <input
+                type="checkbox"
+                :value="num"
+                v-model="selectedBosses"
+                class="form-checkbox text-stone-600 dark:text-stone-300"
+              />
+              <span class="text-stone-700 dark:text-stone-300"
+                >{{ num }}号</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- 招募相关 -->
+        <div class="mt-4">
+          <!-- 招募职业 TAB 分页 -->
+          <label class="text-stone-700 dark:text-stone-100">招募模式：</label>
+          <div class="flex justify-center my-4">
+            <button
+              v-for="(tab, index) in ['简单', '具体']"
+              :key="tab"
+              @click="activeRecurTab = tab"
+              :class="[
               'w-full p-2 first:rounded-l last:rounded-r',
-              activeRecurTab === tab ? 'bg-stone-400 text-white' : 'bg-stone-200 text-stone-700',
+              activeRecurTab  === tab ? 'bg-stone-400 text-white dark:bg-stone-700 dark:text-white' : 'bg-stone-200 text-stone-700 dark:bg-stone-600 dark:text-stone-300',
               index === 0 ? 'rounded-r-none' : '',
               index === 1 ? 'rounded-l-none' : ''
             ]"
-          >
-            {{ tab }}
-          </button>
-        </div>
-
-        <!-- 简单招募职业板块 -->
-        <!-- 简单页：格式模板选择 -->
-
-        <div v-if="activeRecurTab === '简单'">
-          <h3 class="text-stone-700 dark:text-stone-100">招募位置：</h3>
-          <!-- card-group -->
-          <div
-            class="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 my-2"
-          >
-            <div
-              v-for="(recruit, index) in simpleRecruit"
-              :key="index"
-              class="p-4 bg-stone-200 rounded shadow dark:bg-stone-700 cursor-pointer relative"
             >
-              <h4 class="text-md font-semibold">{{ recruit.chsName }}</h4>
-              <div class="absolute top-4 right-4 flex items-center space-x-2">
-                <button
-                  @click.stop="decreaseCount(index)"
-                  class="bg-stone-400 text-white font-semibold leading-3 w-7 h-7 px-2 py-1 rounded hover:bg-stone-600"
-                >
-                  -
-                </button>
-                <span class="text-lg font-bold">{{ recruit.count }}</span>
-                <button
-                  @click.stop="increaseCount(index)"
-                  class="bg-stone-400 text-white font-semibold leading-3 w-7 h-7 px-2 py-1 rounded hover:bg-stone-600"
-                >
-                  +
-                </button>
+              {{ tab }}
+            </button>
+          </div>
+
+          <!-- 简单招募职业板块 -->
+          <!-- 简单页：格式模板选择 -->
+
+          <div v-if="activeRecurTab === '简单'">
+            <h3 class="text-stone-700 dark:text-stone-100">招募位置：</h3>
+            <!-- card-group -->
+            <div
+              class="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 my-2"
+            >
+              <div
+                v-for="(recruit, index) in simpleRecruit"
+                :key="index"
+                class="p-4 bg-stone-200 rounded shadow dark:bg-stone-700 cursor-pointer relative"
+              >
+                <h4 class="text-md font-semibold">{{ recruit.chsName }}</h4>
+                <div class="absolute top-4 right-4 flex items-center space-x-2">
+                  <button
+                    @click.stop="decreaseCount(index)"
+                    class="bg-stone-400 text-white font-semibold leading-3 w-7 h-7 px-2 py-1 rounded hover:bg-stone-600"
+                  >
+                    -
+                  </button>
+                  <span class="text-lg font-bold">{{ recruit.count }}</span>
+                  <button
+                    @click.stop="increaseCount(index)"
+                    class="bg-stone-400 text-white font-semibold leading-3 w-7 h-7 px-2 py-1 rounded hover:bg-stone-600"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
+            </div>
+
+            <!-- 生成招募信息按钮 -->
+            <button
+              @click="generateRecruitment"
+              class="mt-4 py-2 bg-amber-500 text-white rounded hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700 w-full mb-4"
+            >
+              生成招募信息
+            </button>
+
+            <!-- 招募信息展示 -->
+            <!-- 中文 -->
+            <div
+              v-if="chineseRecruitmentText"
+              @mouseenter="showCopyChsRecruBtn = true"
+              @mouseleave="showCopyChsRecruBtn = false"
+              @click="toggleCopyButton"
+              class="p-2 bg-stone-100 dark:bg-stone-700 dark:text-stone-100 rounded border dark:border-stone-600 mt-4 relative group select-text"
+            >
+              <p class="whitespace-pre-wrap">{{ chineseRecruitmentText }}</p>
+
+              <button
+                v-if="showCopyChsRecruBtn"
+                @click.stop="copyToClipboard(chineseRecruitmentText)"
+                class="absolute top-1 right-1 w-8 h-8 flex items-center justify-center rounded bg-stone-300 hover:bg-stone-400 dark:bg-stone-600 dark:hover:bg-stone-500 text-stone-700 dark:text-white transition-opacity duration-300"
+              >
+                <i class="fa-solid fa-copy"></i>
+              </button>
+            </div>
+            <!-- 英文 -->
+            <div
+              v-if="englishRecruitmentText"
+              @mouseenter="showCopyEngRecruBtn = true"
+              @mouseleave="showCopyEngRecruBtn = false"
+              @click="toggleCopyButton"
+              class="p-2 bg-stone-100 dark:bg-stone-700 dark:text-stone-100 rounded border dark:border-stone-600 mt-4 relative group select-text"
+            >
+              <p class="whitespace-pre-wrap">{{ englishRecruitmentText }}</p>
+
+              <button
+                v-if="showCopyEngRecruBtn"
+                @click.stop="showCopyEngRecruBtn(englishRecruitmentText)"
+                class="absolute top-1 right-1 w-8 h-8 flex items-center justify-center rounded bg-stone-300 hover:bg-stone-400 dark:bg-stone-600 dark:hover:bg-stone-500 text-stone-700 dark:text-white transition-opacity duration-300"
+              >
+                <i class="fa-solid fa-copy"></i>
+              </button>
             </div>
           </div>
 
-          <!-- 生成招募信息按钮 -->
-          <button
-            @click="generateRecruitment"
-            class="mt-4 py-2 bg-amber-500 text-white rounded hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700 w-full mb-4"
-          >
-            生成招募信息
-          </button>
-
-          <!-- 招募信息展示 -->
-          <!-- 中文 -->
-          <div
-            v-if="chineseRecruitmentText"
-            @mouseenter="showCopyChsRecruBtn = true"
-            @mouseleave="showCopyChsRecruBtn = false"
-            @click="toggleCopyButton"
-            class="p-2 bg-stone-100 dark:bg-stone-700 dark:text-stone-100 rounded border dark:border-stone-600 mt-4 relative group select-text"
-          >
-            <p class="whitespace-pre-wrap">{{ chineseRecruitmentText }}</p>
-
-            <button
-              v-if="showCopyChsRecruBtn"
-              @click.stop="copyToClipboard(chineseRecruitmentText)"
-              class="absolute top-1 right-1 w-8 h-8 flex items-center justify-center rounded bg-stone-300 hover:bg-stone-400 dark:bg-stone-600 dark:hover:bg-stone-500 text-stone-700 dark:text-white transition-opacity duration-300"
-            >
-              <i class="fa-solid fa-copy"></i>
-            </button>
-          </div>
-          <!-- 英文 -->
-          <div
-            v-if="englishRecruitmentText"
-            @mouseenter="showCopyEngRecruBtn = true"
-            @mouseleave="showCopyEngRecruBtn = false"
-            @click="toggleCopyButton"
-            class="p-2 bg-stone-100 dark:bg-stone-700 dark:text-stone-100 rounded border dark:border-stone-600 mt-4 relative group select-text"
-          >
-            <p class="whitespace-pre-wrap">{{ englishRecruitmentText }}</p>
-
-            <button
-              v-if="showCopyEngRecruBtn"
-              @click.stop="showCopyEngRecruBtn(englishRecruitmentText)"
-              class="absolute top-1 right-1 w-8 h-8 flex items-center justify-center rounded bg-stone-300 hover:bg-stone-400 dark:bg-stone-600 dark:hover:bg-stone-500 text-stone-700 dark:text-white transition-opacity duration-300"
-            >
-              <i class="fa-solid fa-copy"></i>
-            </button>
-          </div>
-        </div>
-
-        <!-- 具体页：招募职业板块 -->
-        <div v-if="activeRecurTab === '具体'">
-          <!-- 具体页内容，沿用之前提供的代码 -->
-          <!-- 这里放置完整的具体招募职业板块代码 -->
-          <!-- 具体招募职业板块 -->
-          <div class="mb-4">
-            <div
-              class="flex flex-col flex-col-reverse md:flex-row sm:flex-col-reverse gap-4 my-4"
-            >
-              <!-- 左侧列：角色分类 -->
+          <!-- 具体页：招募职业板块 -->
+          <div v-if="activeRecurTab === '具体'">
+            <!-- 具体页内容，沿用之前提供的代码 -->
+            <!-- 这里放置完整的具体招募职业板块代码 -->
+            <!-- 具体招募职业板块 -->
+            <div class="mb-4">
               <div
-                class="w-64 sm:w-64 md:w-full md:mr-20 lg:w-full xl:w-full 2xl:w-full 2xl:mr-0"
+                class="flex flex-col flex-col-reverse md:flex-row sm:flex-col-reverse gap-4 my-4"
               >
-                <div class="mt-1">
-                  <h4
-                    class="font-semibold text-stone-700 dark:text-stone-100 text-sm sm:text-sm md:text-base lg:text-md mb-2"
-                  >
-                    坦克 ({{ recruitTeam.tank.length }}/{{
-                    dungeonRequireRoles[playerCount].tank }})
-                    <!-- 添加修改按钮 -->
-                    <button
-                      @click="editRoleCount('tank')"
-                      class="ml-2 bg-stone-500 text-white p-1 rounded text-xs"
+                <!-- 左侧列：角色分类 -->
+                <div
+                  class="w-64 sm:w-64 md:w-full md:mr-20 lg:w-full xl:w-full 2xl:w-full 2xl:mr-0"
+                >
+                  <div class="mt-1">
+                    <h4
+                      class="font-semibold text-stone-700 dark:text-stone-100 text-sm sm:text-sm md:text-base lg:text-md mb-2"
                     >
-                      修改
-                    </button>
-                  </h4>
-                  <div
-                    class="grid grid-cols-5 sm:grid-cols-5 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2"
-                  >
-                    <!-- 坦克职业头像 -->
-                    <div
-                      v-for="(member, index) in recruitTeam.tank"
-                      :key="index"
-                      class="relative mb-2 grid place-items-center"
-                    >
-                      <img
-                        :src="member.icon"
-                        :alt="member.name"
-                        class="w-8 h-8 rounded-full object-cover aspect-square"
-                      />
-                      <span
-                        class="text-xs text-gray-600 dark:text-gray-400 mt-1"
-                        >{{ member.name }}</span
-                      >
+                      坦克 ({{ recruitTeam.tank.length }}/{{
+                      dungeonRequireRoles[playerCount].tank }})
+                      <!-- 添加修改按钮 -->
                       <button
-                        @click="removeRole('tank', index)"
-                        class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 text-xs h-4 w-4 flex items-center justify-center leading-[0.875rem]"
+                        @click="editRoleCount('tank')"
+                        class="ml-2 bg-stone-500 text-white p-1 rounded text-xs"
                       >
-                        X
+                        修改
                       </button>
+                    </h4>
+                    <div
+                      class="grid grid-cols-5 sm:grid-cols-5 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2"
+                    >
+                      <!-- 坦克职业头像 -->
+                      <div
+                        v-for="(member, index) in recruitTeam.tank"
+                        :key="index"
+                        class="relative mb-2 grid place-items-center"
+                      >
+                        <img
+                          :src="member.icon"
+                          :alt="member.name"
+                          class="w-8 h-8 rounded-full object-cover aspect-square"
+                        />
+                        <span
+                          class="text-xs text-stone-600 dark:text-stone-400 mt-1"
+                          >{{ member.name }}</span
+                        >
+                        <button
+                          @click="removeRole('tank', index)"
+                          class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 text-xs h-4 w-4 flex items-center justify-center leading-[0.875rem]"
+                        >
+                          X
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mt-4">
+                    <h4
+                      class="font-semibold text-stone-700 dark:text-stone-100 text-sm sm:text-sm md:text-base lg:text-md mb-2"
+                    >
+                      输出 ({{ recruitTeam.dps.length }}/{{
+                      dungeonRequireRoles[playerCount].dps }})
+                      <button
+                        @click="editRoleCount('dps')"
+                        class="ml-2 bg-stone-500 text-white p-1 rounded text-xs"
+                      >
+                        修改
+                      </button>
+                    </h4>
+                    <div
+                      class="grid grid-cols-5 sm:grid-cols-5 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2"
+                    >
+                      <!-- 输出职业头像 -->
+                      <div
+                        v-for="(member, index) in recruitTeam.dps"
+                        :key="index"
+                        class="relative mb-2 grid place-items-center"
+                      >
+                        <img
+                          :src="member.icon"
+                          :alt="member.name"
+                          class="w-8 h-8 rounded-full object-cover aspect-square"
+                        />
+                        <span
+                          class="text-xs text-stone-600 dark:text-stone-400 mt-1"
+                          >{{ member.name }}</span
+                        >
+                        <button
+                          @click="removeRole('dps', index)"
+                          class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 text-xs h-4 w-4 flex items-center justify-center leading-[0.875rem]"
+                        >
+                          X
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mt-4">
+                    <h4
+                      class="font-semibold text-stone-700 dark:text-stone-100 text-sm sm:text-sm md:text-base lg:text-md mb-2"
+                    >
+                      治疗 ({{ recruitTeam.healer.length }}/{{
+                      dungeonRequireRoles[playerCount].healer }})
+                      <button
+                        @click="editRoleCount('healer')"
+                        class="ml-2 bg-stone-500 text-white p-1 rounded text-xs"
+                      >
+                        修改
+                      </button>
+                    </h4>
+                    <div
+                      class="grid grid-cols-5 sm:grid-cols-5 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2"
+                    >
+                      <!-- 治疗职业头像 -->
+                      <div
+                        v-for="(member, index) in recruitTeam.healer"
+                        :key="index"
+                        class="relative mb-2 grid place-items-center"
+                      >
+                        <img
+                          :src="member.icon"
+                          :alt="member.name"
+                          class="w-8 h-8 rounded-full object-cover aspect-square"
+                        />
+                        <span
+                          class="text-xs text-stone-600 dark:text-stone-400 mt-1"
+                          >{{ member.name }}</span
+                        >
+                        <button
+                          @click="removeRole('healer', index)"
+                          class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 text-xs h-4 w-4 flex items-center justify-center leading-[0.875rem]"
+                        >
+                          X
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div class="mt-4">
-                  <h4
-                    class="font-semibold text-stone-700 dark:text-stone-100 text-sm sm:text-sm md:text-base lg:text-md mb-2"
-                  >
-                    输出 ({{ recruitTeam.dps.length }}/{{
-                    dungeonRequireRoles[playerCount].dps }})
-                    <button
-                      @click="editRoleCount('dps')"
-                      class="ml-2 bg-stone-500 text-white p-1 rounded text-xs"
-                    >
-                      修改
-                    </button>
-                  </h4>
+                <!-- 右侧列：基础职业 -->
+                <div
+                  class="grid-cols-2 sm:grid sm:grid-cols-2 sm:gap-2 md:mt-2 md:h-full md:w-full"
+                >
                   <div
-                    class="grid grid-cols-5 sm:grid-cols-5 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2"
+                    v-for="(role, index) in roles"
+                    :key="index"
+                    class="flex items-center justify-between p-2 mb-1 bg-stone-100 rounded bg-stone-200 dark:bg-stone-700"
                   >
-                    <!-- 输出职业头像 -->
-                    <div
-                      v-for="(member, index) in recruitTeam.dps"
-                      :key="index"
-                      class="relative mb-2 grid place-items-center"
-                    >
+                    <div class="flex items-center gap-2">
+                      <!-- 显示角色图标 -->
                       <img
-                        :src="member.icon"
-                        :alt="member.name"
-                        class="w-8 h-8 rounded-full object-cover aspect-square"
+                        :src="role.icon"
+                        alt="职业图标"
+                        class="w-6 h-6 rounded"
                       />
-                      <span
-                        class="text-xs text-gray-600 dark:text-gray-400 mt-1"
-                        >{{ member.name }}</span
-                      >
-                      <button
-                        @click="removeRole('dps', index)"
-                        class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 text-xs h-4 w-4 flex items-center justify-center leading-[0.875rem]"
-                      >
-                        X
-                      </button>
+                      <span class="text-stone-700 dark:text-stone-100">
+                        {{ role.name }}
+                      </span>
                     </div>
-                  </div>
-                </div>
-
-                <div class="mt-4">
-                  <h4
-                    class="font-semibold text-stone-700 dark:text-stone-100 text-sm sm:text-sm md:text-base lg:text-md mb-2"
-                  >
-                    治疗 ({{ recruitTeam.healer.length }}/{{
-                    dungeonRequireRoles[playerCount].healer }})
                     <button
-                      @click="editRoleCount('healer')"
-                      class="ml-2 bg-stone-500 text-white p-1 rounded text-xs"
+                      @click="openModal(role)"
+                      class="bg-stone-500 text-white p-1 rounded text-xs"
                     >
-                      修改
+                      位置
                     </button>
-                  </h4>
-                  <div
-                    class="grid grid-cols-5 sm:grid-cols-5 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2"
-                  >
-                    <!-- 治疗职业头像 -->
-                    <div
-                      v-for="(member, index) in recruitTeam.healer"
-                      :key="index"
-                      class="relative mb-2 grid place-items-center"
-                    >
-                      <img
-                        :src="member.icon"
-                        :alt="member.name"
-                        class="w-8 h-8 rounded-full object-cover aspect-square"
-                      />
-                      <span
-                        class="text-xs text-gray-600 dark:text-gray-400 mt-1"
-                        >{{ member.name }}</span
-                      >
-                      <button
-                        @click="removeRole('healer', index)"
-                        class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 text-xs h-4 w-4 flex items-center justify-center leading-[0.875rem]"
-                      >
-                        X
-                      </button>
-                    </div>
                   </div>
                 </div>
               </div>
 
-              <!-- 右侧列：基础职业 -->
+              <!-- 弹窗 -->
               <div
-                class="grid-cols-2 sm:grid sm:grid-cols-2 sm:gap-2 md:mt-2 md:h-full md:w-full"
+                v-if="isModalOpen"
+                class="fixed inset-0 bg-stone-500 bg-opacity-50 flex justify-center items-center"
               >
                 <div
-                  v-for="(role, index) in roles"
-                  :key="index"
-                  class="flex items-center justify-between p-2 mb-1 bg-stone-100 rounded bg-stone-200 dark:bg-stone-700"
+                  class="bg-white dark:bg-stone-800 p-6 rounded shadow-lg w-96"
                 >
-                  <div class="flex items-center gap-2">
-                    <!-- 显示角色图标 -->
-                    <img
-                      :src="role.icon"
-                      alt="职业图标"
-                      class="w-6 h-6 rounded"
-                    />
-                    <span class="text-stone-700 dark:text-stone-100">
-                      {{ role.name }}
-                    </span>
+                  <h4
+                    class="text-stone-700 dark:text-stone-100 mb-4 text-lg font-semibold"
+                  >
+                    选择职业位置：
+                  </h4>
+                  <div class="flex justify-start mb-4">
+                    <button
+                      @click="assignRole('tank')"
+                      class="bg-green-500 text-white p-2 rounded text-sm mr-2"
+                      :disabled="recruitTeam.tank.length >= dungeonRequireRoles[playerCount]?.tank"
+                    >
+                      坦克
+                    </button>
+                    <button
+                      @click="assignRole('dps')"
+                      class="bg-yellow-500 text-white p-2 rounded text-sm mr-2"
+                      :disabled="recruitTeam.dps.length >= dungeonRequireRoles[playerCount]?.dps"
+                    >
+                      输出
+                    </button>
+                    <button
+                      @click="assignRole('healer')"
+                      class="bg-stone-500 text-white p-2 rounded text-sm"
+                      :disabled="recruitTeam.healer.length >= dungeonRequireRoles[playerCount]?.healer"
+                    >
+                      治疗
+                    </button>
                   </div>
-                  <button
-                    @click="openModal(role)"
-                    class="bg-stone-500 text-white p-1 rounded text-xs"
-                  >
-                    位置
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- 弹窗 -->
-            <div
-              v-if="isModalOpen"
-              class="fixed inset-0 bg-stone-500 bg-opacity-50 flex justify-center items-center"
-            >
-              <div
-                class="bg-white dark:bg-stone-800 p-6 rounded shadow-lg w-96"
-              >
-                <h4
-                  class="text-stone-700 dark:text-stone-100 mb-4 text-lg font-semibold"
-                >
-                  选择职业位置：
-                </h4>
-                <div class="flex justify-start mb-4">
-                  <button
-                    @click="assignRole('tank')"
-                    class="bg-green-500 text-white p-2 rounded text-sm mr-2"
-                    :disabled="recruitTeam.tank.length >= dungeonRequireRoles[playerCount]?.tank"
-                  >
-                    坦克
-                  </button>
-                  <button
-                    @click="assignRole('dps')"
-                    class="bg-yellow-500 text-white p-2 rounded text-sm mr-2"
-                    :disabled="recruitTeam.dps.length >= dungeonRequireRoles[playerCount]?.dps"
-                  >
-                    输出
-                  </button>
-                  <button
-                    @click="assignRole('healer')"
-                    class="bg-stone-500 text-white p-2 rounded text-sm"
-                    :disabled="recruitTeam.healer.length >= dungeonRequireRoles[playerCount]?.healer"
-                  >
-                    治疗
-                  </button>
-                </div>
-                <div class="mt-4 flex justify-end">
-                  <button
-                    @click="closeModal"
-                    class="bg-stone-500 dark:bg-stone-600 text-white p-2 rounded text-sm"
-                  >
-                    关闭
-                  </button>
+                  <div class="mt-4 flex justify-end">
+                    <button
+                      @click="closeModal"
+                      class="bg-stone-500 dark:bg-stone-600 text-white p-2 rounded text-sm"
+                    >
+                      关闭
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -755,6 +807,9 @@
             outputText: '',
             activeTab: 'dungeon', // 默认为副本识别
             // translationService: 'baidu', // 默认使用百度翻译 注释时则使用 google
+            activeCompletionTab: '全通',
+            completion: 'full',
+            selectedBosses: [],
             activeRecurTab: '简单',
             simpleRecruit: [
               {
