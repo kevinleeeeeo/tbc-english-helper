@@ -626,14 +626,14 @@
 
       const abbreviationMap = {
         'LOOKING FOR': '寻找',
-        //Looking for More
-        LFM: '寻找更多队友',
-        //Looking for 1 More
-        LF1M: '寻找1名队友',
         //Looking for
         LF: '寻找',
+        //Looking for More
+        LFM: '寻找更多队友',
         //Looking for Group
         LFG: '寻找组队',
+        //Looking for 1 More
+        LF1M: '寻找1名队友',
         LF1: '寻找1名队友',
         LF2m: '寻找2名队友',
         LF3m: '寻找3名队友',
@@ -1034,16 +1034,23 @@
               return;
             }
 
+            // 先去掉 [数字]
+            const dungeonName = this.selectedDungeon
+              .replace(/\[\d+\]/g, '')
+              .trim();
+
             // 生成中文格式
             const chineseRecruitText = recruitCounts
               .map((recruit) => `${recruit.chsName} x${recruit.count}`)
               .join('，');
             // 提取中文副本名称
-            const chineseDungeonName = this.selectedDungeon.replace(
-              /.*：(.+?)\(.+\)/,
+            const chineseDungeonName = dungeonName.replace(
+              /.*?[\] ]+([^：()]+)[：]?.*\(.*\)$/,
               '$1'
             );
-            this.chineseRecruitmentText = `${chineseDungeonName}需要${chineseRecruitText}`;
+            this.chineseRecruitmentText = `[${chineseDungeonName}][${
+              this.difficulty === 'normal' ? '普通模式' : '英雄模式'
+            }]需要${chineseRecruitText}`;
 
             // 生成英文格式
             const englishRecruitText = recruitCounts
@@ -1051,12 +1058,16 @@
                 (recruit) => `${recruit.count} ${recruit.engName.toLowerCase()}`
               )
               .join(', ');
+
+            // 提取英文副本简写名称
+            const englishDungeonShortName =
+              dungeonName.match(/\[\w+\]/)?.[0]?.replace(/[\[\]]/g, '') || '';
+
             // 提取英文副本名称
-            const englishDungeonName = this.selectedDungeon.replace(
-              /.*\((.+?)\)/,
-              '$1'
-            );
-            this.englishRecruitmentText = `${englishDungeonName} need ${englishRecruitText}`;
+            const englishDungeonName = dungeonName.replace(/.*\((.+)\)$/, '$1');
+            this.englishRecruitmentText = `[LF][${englishDungeonName}][${englishDungeonShortName}][${
+              this.difficulty === 'normal' ? 'Normal' : 'Heroic'
+            }] need ${englishRecruitText}`;
           },
 
           copyToClipboard(text) {
