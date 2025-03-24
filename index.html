@@ -151,9 +151,10 @@
         </div>
       </div> -->
 
+      <!-- 翻译聊天tab内容 -->
       <div v-if="activeTab === 'translate'">
         <!-- 语言切换栏 -->
-        <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center justify-between my-3">
           <span class="text-lg font-semibold text-stone-700 dark:text-stone-200"
             >{{ isEnglishToChinese ? '英文' : '中文' }}</span
           >
@@ -172,9 +173,11 @@
           <!-- 输入框 -->
           <textarea
             v-model="inputText"
-            :placeholder="isEnglishToChinese ? '输入英文...' : '输入中文...'"
+            :placeholder="isEnglishToChinese ? '在聊天翻译选择 “英译中” 的情况时，可以输入英文内容，如：\nFresh KARAZHAN! need Feral/enh/elem//Rsham!!! Check GEAR Aldor BanK! (7/10)\n\n又或者，输出粘贴的英文世界聊天记录，如：\n[7. world] [Elunaris]: LF3M RFD need tank\n[7. world] [Camelissimo]: Wlock LF Kara any time before reset!\n[7. world] [Zurboorg]: wtb [Righteous Orb]\n[7. world] [Szanyi]: LF2M Alcatraz - tank heal - summ ready\n[7. world] [Elunaris]: LF3M RFD - need tank' : '在聊天翻译选择 “中译英” 的情况时，可以输入中文内容，如：这是一段测试中文翻译英文的句子。'"
             rows="6"
-            class="w-full min-h-[150px] p-3 border rounded bg-stone-100 dark:bg-stone-800 dark:text-stone-100 dark:border-stone-600 placeholder-stone-400 dark:placeholder-stone-500"
+            class="w-full min-h-[300px] p-3 border rounded bg-stone-100 dark:bg-stone-800 dark:text-stone-100 dark:border-stone-600 placeholder-stone-400 dark:placeholder-stone-500 resize-none overflow-hidden h-auto"
+            ref="inputArea"
+            @input="adjustHeight($event)"
           ></textarea>
 
           <!-- 输出框 -->
@@ -183,7 +186,9 @@
             :placeholder="isEnglishToChinese ? '翻译后的中文...' : '翻译后的英文...'"
             rows="6"
             readonly
-            class="w-full min-h-[150px] p-3 border rounded bg-stone-200 dark:bg-stone-700 dark:text-stone-100 dark:border-stone-600"
+            class="w-full min-h-[300px] p-3 border rounded bg-stone-200 dark:bg-stone-700 dark:text-stone-100 dark:border-stone-600 resize-none overflow-hidden h-auto"
+            ref="outputArea"
+            @input="adjustHeight($event)"
           ></textarea>
         </div>
 
@@ -982,291 +987,14 @@
             this.recruitTeam.tank = [];
             this.recruitTeam.dps = [];
             this.recruitTeam.healer = [];
+          },
+          outputText() {
+            this.$nextTick(() =>
+              this.adjustHeight({ target: this.$refs.outputArea })
+            );
           }
         },
         methods: {
-          toggleLanguage() {
-            this.isEnglishToChinese = !this.isEnglishToChinese;
-            [this.inputText, this.outputText] = [
-              this.outputText,
-              this.inputText
-            ]; // 交换内容
-          },
-          translateText() {
-            // 这里可以接入实际翻译API
-            this.outputText = this.isEnglishToChinese
-              ? '翻译后的中文文本'
-              : 'Translated English text';
-          },
-          clearText() {
-            this.inputText = '';
-            this.outputText = '';
-          },
-          setCompletionMode(tab) {
-            this.activeCompletionTab = tab;
-            if (tab === '全通') {
-              this.selectedBosses = []; // 全通时清空已选择的BOSS
-            }
-          },
-          increaseCount(index) {
-            if (this.simpleRecruit[index].count < 40) {
-              this.simpleRecruit[index].count++;
-            }
-          },
-          decreaseCount(index) {
-            if (this.simpleRecruit[index].count > 0) {
-              this.simpleRecruit[index].count--;
-            }
-          },
-          selectRole(role, job) {
-            const icon = this.roles[job]?.icon || 'path/to/default-icon.png';
-
-            if (role === 'tank') {
-              if (
-                this.tankCount < this.dungeonRequireRoles[this.playerCount].tank
-              ) {
-                this.tankIcons.push(icon);
-                this.tankCount++;
-              }
-            } else if (role === 'dps') {
-              if (
-                this.dpsCount < this.dungeonRequireRoles[this.playerCount].dps
-              ) {
-                this.dpsIcons.push(icon);
-                this.dpsCount++;
-              }
-            } else if (role === 'healer') {
-              if (
-                this.healerCount <
-                this.dungeonRequireRoles[this.playerCount].healer
-              ) {
-                this.healerIcons.push(icon);
-                this.healerCount++;
-              }
-            }
-          },
-
-          clearRoleIcons() {
-            this.tankIcons = [];
-            this.dpsIcons = [];
-            this.healerIcons = [];
-          },
-          updateRoleCounts() {
-            const roleConfig =
-              this.dungeonRequireRoles[this.playerCount] ||
-              this.dungeonRequireRoles[5];
-            this.tankCount = this.selectedRoles.filter(
-              (role) => role === 'tank'
-            ).length;
-            this.dpsCount = this.selectedRoles.filter(
-              (role) => role === 'dps'
-            ).length;
-            this.healerCount = this.selectedRoles.filter(
-              (role) => role === 'healer'
-            ).length;
-          },
-          editRoleCount(role) {
-            const currentCount =
-              this.dungeonRequireRoles[this.playerCount]?.[role] || 0;
-            const newCount = prompt(
-              `请输入新的 ${role} 数量（当前: ${currentCount}）`,
-              currentCount
-            );
-            if (
-              newCount !== null &&
-              !isNaN(newCount) &&
-              Number(newCount) >= 0
-            ) {
-              this.dungeonRequireRoles[this.playerCount][role] =
-                Number(newCount);
-            } else {
-              alert('请输入有效的正整数！');
-            }
-          },
-          openModal(job) {
-            this.selectedJob = job;
-            this.isModalOpen = true;
-          },
-          closeModal() {
-            this.isModalOpen = false;
-            this.selectedJob = null;
-          },
-          assignRole(role) {
-            const maxCount =
-              this.dungeonRequireRoles[this.playerCount]?.[role] || 0;
-            const jobInfo = this.selectedJob;
-            // console.log(this.selectedJob, jobInfo);
-
-            if (role === 'tank' && this.recruitTeam.tank.length < maxCount) {
-              this.recruitTeam.tank.push({
-                name: jobInfo.name,
-                icon: jobInfo.icon
-              });
-            } else if (
-              role === 'dps' &&
-              this.recruitTeam.dps.length < maxCount
-            ) {
-              this.recruitTeam.dps.push({
-                name: jobInfo.name,
-                icon: jobInfo.icon
-              });
-            } else if (
-              role === 'healer' &&
-              this.recruitTeam.healer.length < maxCount
-            ) {
-              this.recruitTeam.healer.push({
-                name: jobInfo.name,
-                icon: jobInfo.icon
-              });
-            }
-
-            this.closeModal();
-          },
-          removeRole(role, index) {
-            if (role === 'tank') {
-              this.recruitTeam.tank.splice(index, 1);
-            } else if (role === 'dps') {
-              this.recruitTeam.dps.splice(index, 1);
-            } else if (role === 'healer') {
-              this.recruitTeam.healer.splice(index, 1);
-            }
-          },
-
-          selectTemplate(template) {
-            this.selectedTemplate = template;
-          },
-          generateRecruitment() {
-            if (
-              !this.selectedRegion ||
-              !this.selectedDungeon ||
-              !this.difficulty
-            ) {
-              this.recruitmentText = '请先选择区域、副本和难度！';
-              return;
-            }
-
-            // 统计各职业数量
-            const recruitCounts = this.simpleRecruit
-              .filter((recruit) => recruit.count > 0)
-              .map((recruit) => ({
-                chsName: recruit.chsName,
-                engName: recruit.engName,
-                count: recruit.count
-              }));
-
-            if (recruitCounts.length === 0) {
-              alert('请至少选择一个招募职业！');
-              return;
-            }
-
-            // 先去掉 [数字]
-            const dungeonName = this.selectedDungeon
-              .replace(/\[\d+\]/g, '')
-              .trim();
-
-            // 生成中文格式
-            const chineseRecruitText = recruitCounts
-              .map((recruit) => `${recruit.chsName} x${recruit.count}`)
-              .join('，');
-
-            // 提取中文副本名称
-            const chineseDungeonName = dungeonName.replace(
-              /.*?[\] ]+([^：()]+)[：]?.*\(.*\)$/,
-              '$1'
-            );
-
-            // 生成中文招募信息，根据全通或半通调整
-            let chineseCompletionInfo = '';
-            if (this.activeCompletionTab === '全通') {
-              chineseCompletionInfo = '[全通]';
-            } else if (this.activeCompletionTab === '半通') {
-              // 处理半通BOSS的选择格式
-              const selectedBossesFormatted = this.selectedBosses
-                .map((num) => `老${num}`)
-                .join('、');
-              chineseCompletionInfo = `[只打${selectedBossesFormatted}]`;
-            }
-
-            this.chineseRecruitmentText = `[${chineseDungeonName}][${
-              this.difficulty === 'normal' ? '普通模式' : '英雄模式'
-            }]${chineseCompletionInfo}需要${chineseRecruitText}`;
-
-            // 生成英文格式
-            const englishRecruitText = recruitCounts
-              .map(
-                (recruit) => `${recruit.count} ${recruit.engName.toLowerCase()}`
-              )
-              .join(', ');
-
-            // 提取英文副本简写名称
-            const englishDungeonShortName =
-              dungeonName.match(/\[\w+\]/)?.[0]?.replace(/[\[\]]/g, '') || '';
-
-            // 提取英文副本名称
-            const englishDungeonName = dungeonName.replace(/.*\((.+)\)$/, '$1');
-
-            // 生成英文招募信息，根据全通或半通调整
-            let englishCompletionInfo = '';
-            if (this.activeCompletionTab === '全通') {
-              englishCompletionInfo = 'full run';
-            } else if (this.activeCompletionTab === '半通') {
-              // 处理半通BOSS的选择格式，避免重复的 boss
-              const selectedBossesFormatted = this.selectedBosses
-                .map((num) => `boss${num}`)
-                .join(','); // 修复这里的逗号拼接
-              englishCompletionInfo = `only kill ${selectedBossesFormatted}`;
-            }
-
-            this.englishRecruitmentText = `[LF][${englishDungeonName}][${englishDungeonShortName}][${
-              this.difficulty === 'normal' ? 'Normal' : 'Heroic'
-            }] need ${englishRecruitText} ,${englishCompletionInfo}`;
-          },
-          copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-              alert('招募信息已复制到剪贴板！');
-            });
-          },
-          toggleCopyButton() {
-            // 移动设备点击切换显示状态
-            this.showCopyChsRecruBtn = !this.showCopyChsRecruBtn;
-            this.showCopyEngRecruBtn = !this.showCopyEngRecruBtn;
-          },
-          toggleTheme() {
-            this.isDarkMode = !this.isDarkMode;
-            localStorage.setItem('theme', this.isDarkMode ? 'dark' : 'light');
-            document.documentElement.classList.toggle('dark', this.isDarkMode);
-          },
-          // 提取区域列表
-          extractRegions() {
-            const regionSet = new Set();
-            for (const value of Object.values(dungeonMap)) {
-              const region = value.split('-')[1];
-              if (region) regionSet.add(region);
-            }
-            this.regions = Array.from(regionSet);
-            this.selectedRegion = this.regions[0] || '';
-            this.updateDungeonList();
-          },
-          // 更新副本列表
-          updateDungeonList() {
-            this.filteredDungeons = Object.entries(dungeonMap)
-              .filter(([, value]) => value.includes(`-${this.selectedRegion}`))
-              .map(([key, value]) => ({
-                key,
-                value: `[${key}][${value.split('-')[2]}] ${value.split('-')[0]}`
-              }));
-
-            // 默认选择第一个副本
-            this.selectedDungeon = this.filteredDungeons.length
-              ? this.filteredDungeons[0].value
-              : '';
-          },
-
-          switchTab(tabName) {
-            this.activeTab = tabName;
-            this.clearText(); // 切换 TAB 时清除输出文本
-          },
-
           clearText() {
             this.inputText = '';
             this.outputText = '';
@@ -1276,18 +1004,25 @@
            * 获取默认的翻译文本内容。
            * @returns {string} - 默认翻译内容。
            */
-          getDefaultText() {
-            return `
-              [7. world] [Elunaris]: LF3M RFD need tank
-              [7. world] [Camelissimo]: Wlock LF Kara any time before reset!
-              [7. world] [Zurboorg]: wtb [Righteous Orb]
-              [7. world] [Szanyi]: LF2M Alcatraz - tank heal - summ ready
-              [7. world] [Elunaris]: LF3M RFD - need tank
-              [7. world] [Grook]: any purpose for [Syndicate Emblem] in tbc??
-              [7. world] [Liftwaffe]: none
-              [7. world] [Liftwaffe]: ignore it
-              [7. world] [Sassysally]: Healer LFG MT Normal
-            `.trim();
+          getDefaultText(isEnglishToChinese) {
+            if (isEnglishToChinese) {
+              return `
+                在聊天翻译选择 “英译中” 的情况时，可以输入英文内容，如：
+                Fresh KARAZHAN! need Feral/enh/elem//Rsham!!! Check GEAR Aldor BanK! (7/10)
+                
+                又或者，输出粘贴的英文世界聊天记录，如：
+                [7. world] [Elunaris]: LF3M RFD need tank
+                [7. world] [Camelissimo]: Wlock LF Kara any time before reset!
+                [7. world] [Zurboorg]: wtb [Righteous Orb]
+                [7. world] [Szanyi]: LF2M Alcatraz - tank heal - summ ready
+                [7. world] [Elunaris]: LF3M RFD - need tank
+              `.trim();
+            } else {
+              return `
+                在聊天翻译选择 “中译英” 的情况时，可以输入中文内容，如：
+                这是一段测试中文翻译英文的句子。
+              `.trim();
+            }
           },
 
           /**
@@ -1295,7 +1030,8 @@
            * @returns {string} - 处理后的文本。
            */
           processText() {
-            let text = this.inputText || this.getDefaultText();
+            let text =
+              this.inputText || this.getDefaultText(this.isEnglishToChinese);
 
             // 格式化 dungeonMap，根据当前标签进行调整
             const formattedDungeonMap = {};
@@ -1494,6 +1230,283 @@
             }
 
             return text;
+          },
+          adjustHeight(event) {
+            const textarea = event.target;
+            textarea.style.height = 'auto';
+            textarea.style.height = `${textarea.scrollHeight}px`;
+          },
+          toggleLanguage() {
+            this.isEnglishToChinese = !this.isEnglishToChinese;
+            [this.inputText, this.outputText] = [
+              this.outputText,
+              this.inputText
+            ]; // 交换内容
+          },
+          clearText() {
+            this.inputText = '';
+            this.outputText = '';
+          },
+          setCompletionMode(tab) {
+            this.activeCompletionTab = tab;
+            if (tab === '全通') {
+              this.selectedBosses = []; // 全通时清空已选择的BOSS
+            }
+          },
+          increaseCount(index) {
+            if (this.simpleRecruit[index].count < 40) {
+              this.simpleRecruit[index].count++;
+            }
+          },
+          decreaseCount(index) {
+            if (this.simpleRecruit[index].count > 0) {
+              this.simpleRecruit[index].count--;
+            }
+          },
+          selectRole(role, job) {
+            const icon = this.roles[job]?.icon || 'path/to/default-icon.png';
+
+            if (role === 'tank') {
+              if (
+                this.tankCount < this.dungeonRequireRoles[this.playerCount].tank
+              ) {
+                this.tankIcons.push(icon);
+                this.tankCount++;
+              }
+            } else if (role === 'dps') {
+              if (
+                this.dpsCount < this.dungeonRequireRoles[this.playerCount].dps
+              ) {
+                this.dpsIcons.push(icon);
+                this.dpsCount++;
+              }
+            } else if (role === 'healer') {
+              if (
+                this.healerCount <
+                this.dungeonRequireRoles[this.playerCount].healer
+              ) {
+                this.healerIcons.push(icon);
+                this.healerCount++;
+              }
+            }
+          },
+
+          clearRoleIcons() {
+            this.tankIcons = [];
+            this.dpsIcons = [];
+            this.healerIcons = [];
+          },
+          updateRoleCounts() {
+            const roleConfig =
+              this.dungeonRequireRoles[this.playerCount] ||
+              this.dungeonRequireRoles[5];
+            this.tankCount = this.selectedRoles.filter(
+              (role) => role === 'tank'
+            ).length;
+            this.dpsCount = this.selectedRoles.filter(
+              (role) => role === 'dps'
+            ).length;
+            this.healerCount = this.selectedRoles.filter(
+              (role) => role === 'healer'
+            ).length;
+          },
+          editRoleCount(role) {
+            const currentCount =
+              this.dungeonRequireRoles[this.playerCount]?.[role] || 0;
+            const newCount = prompt(
+              `请输入新的 ${role} 数量（当前: ${currentCount}）`,
+              currentCount
+            );
+            if (
+              newCount !== null &&
+              !isNaN(newCount) &&
+              Number(newCount) >= 0
+            ) {
+              this.dungeonRequireRoles[this.playerCount][role] =
+                Number(newCount);
+            } else {
+              alert('请输入有效的正整数！');
+            }
+          },
+          openModal(job) {
+            this.selectedJob = job;
+            this.isModalOpen = true;
+          },
+          closeModal() {
+            this.isModalOpen = false;
+            this.selectedJob = null;
+          },
+          assignRole(role) {
+            const maxCount =
+              this.dungeonRequireRoles[this.playerCount]?.[role] || 0;
+            const jobInfo = this.selectedJob;
+            // console.log(this.selectedJob, jobInfo);
+
+            if (role === 'tank' && this.recruitTeam.tank.length < maxCount) {
+              this.recruitTeam.tank.push({
+                name: jobInfo.name,
+                icon: jobInfo.icon
+              });
+            } else if (
+              role === 'dps' &&
+              this.recruitTeam.dps.length < maxCount
+            ) {
+              this.recruitTeam.dps.push({
+                name: jobInfo.name,
+                icon: jobInfo.icon
+              });
+            } else if (
+              role === 'healer' &&
+              this.recruitTeam.healer.length < maxCount
+            ) {
+              this.recruitTeam.healer.push({
+                name: jobInfo.name,
+                icon: jobInfo.icon
+              });
+            }
+
+            this.closeModal();
+          },
+          removeRole(role, index) {
+            if (role === 'tank') {
+              this.recruitTeam.tank.splice(index, 1);
+            } else if (role === 'dps') {
+              this.recruitTeam.dps.splice(index, 1);
+            } else if (role === 'healer') {
+              this.recruitTeam.healer.splice(index, 1);
+            }
+          },
+
+          generateRecruitment() {
+            if (
+              !this.selectedRegion ||
+              !this.selectedDungeon ||
+              !this.difficulty
+            ) {
+              this.recruitmentText = '请先选择区域、副本和难度！';
+              return;
+            }
+
+            // 统计各职业数量
+            const recruitCounts = this.simpleRecruit
+              .filter((recruit) => recruit.count > 0)
+              .map((recruit) => ({
+                chsName: recruit.chsName,
+                engName: recruit.engName,
+                count: recruit.count
+              }));
+
+            if (recruitCounts.length === 0) {
+              alert('请至少选择一个招募职业！');
+              return;
+            }
+
+            // 先去掉 [数字]
+            const dungeonName = this.selectedDungeon
+              .replace(/\[\d+\]/g, '')
+              .trim();
+
+            // 生成中文格式
+            const chineseRecruitText = recruitCounts
+              .map((recruit) => `${recruit.chsName} x${recruit.count}`)
+              .join('，');
+
+            // 提取中文副本名称
+            const chineseDungeonName = dungeonName.replace(
+              /.*?[\] ]+([^：()]+)[：]?.*\(.*\)$/,
+              '$1'
+            );
+
+            // 生成中文招募信息，根据全通或半通调整
+            let chineseCompletionInfo = '';
+            if (this.activeCompletionTab === '全通') {
+              chineseCompletionInfo = '[全通]';
+            } else if (this.activeCompletionTab === '半通') {
+              // 处理半通BOSS的选择格式
+              const selectedBossesFormatted = this.selectedBosses
+                .map((num) => `老${num}`)
+                .join('、');
+              chineseCompletionInfo = `[只打${selectedBossesFormatted}]`;
+            }
+
+            this.chineseRecruitmentText = `[${chineseDungeonName}][${
+              this.difficulty === 'normal' ? '普通模式' : '英雄模式'
+            }]${chineseCompletionInfo}需要${chineseRecruitText}`;
+
+            // 生成英文格式
+            const englishRecruitText = recruitCounts
+              .map(
+                (recruit) => `${recruit.count} ${recruit.engName.toLowerCase()}`
+              )
+              .join(', ');
+
+            // 提取英文副本简写名称
+            const englishDungeonShortName =
+              dungeonName.match(/\[\w+\]/)?.[0]?.replace(/[\[\]]/g, '') || '';
+
+            // 提取英文副本名称
+            const englishDungeonName = dungeonName.replace(/.*\((.+)\)$/, '$1');
+
+            // 生成英文招募信息，根据全通或半通调整
+            let englishCompletionInfo = '';
+            if (this.activeCompletionTab === '全通') {
+              englishCompletionInfo = 'full run';
+            } else if (this.activeCompletionTab === '半通') {
+              // 处理半通BOSS的选择格式，避免重复的 boss
+              const selectedBossesFormatted = this.selectedBosses
+                .map((num) => `boss${num}`)
+                .join(','); // 修复这里的逗号拼接
+              englishCompletionInfo = `only kill ${selectedBossesFormatted}`;
+            }
+
+            this.englishRecruitmentText = `[LF][${englishDungeonName}][${englishDungeonShortName}][${
+              this.difficulty === 'normal' ? 'Normal' : 'Heroic'
+            }] need ${englishRecruitText} ,${englishCompletionInfo}`;
+          },
+          copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+              alert('招募信息已复制到剪贴板！');
+            });
+          },
+          toggleCopyButton() {
+            // 移动设备点击切换显示状态
+            this.showCopyChsRecruBtn = !this.showCopyChsRecruBtn;
+            this.showCopyEngRecruBtn = !this.showCopyEngRecruBtn;
+          },
+          toggleTheme() {
+            this.isDarkMode = !this.isDarkMode;
+            localStorage.setItem('theme', this.isDarkMode ? 'dark' : 'light');
+            document.documentElement.classList.toggle('dark', this.isDarkMode);
+          },
+          // 提取区域列表
+          extractRegions() {
+            const regionSet = new Set();
+            for (const value of Object.values(dungeonMap)) {
+              const region = value.split('-')[1];
+              if (region) regionSet.add(region);
+            }
+            this.regions = Array.from(regionSet);
+            this.selectedRegion = this.regions[0] || '';
+            this.updateDungeonList();
+          },
+          // 更新副本列表
+          updateDungeonList() {
+            this.filteredDungeons = Object.entries(dungeonMap)
+              .filter(([, value]) => value.includes(`-${this.selectedRegion}`))
+              .map(([key, value]) => ({
+                key,
+                value: `[${key}][${value.split('-')[2]}] ${value.split('-')[0]}`
+              }));
+
+            // 默认选择第一个副本
+            this.selectedDungeon = this.filteredDungeons.length
+              ? this.filteredDungeons[0].value
+              : '';
+          },
+
+          switchTab(tabName) {
+            this.activeTab = tabName;
+            this.clearText(); // 切换 TAB 时清除输出文本
           }
         }
       });
